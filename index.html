@@ -7,16 +7,36 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="四屏视频" />
-  <meta name="theme-color" content="#050816" />
-  <title>iPhone 四屏本地视频播放器</title>
+  <meta name="theme-color" content="#f6f8fc" />
+  <title>四屏本地视频</title>
+
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #f4f7fb;
+      --text: #111827;
+      --muted: #6b7280;
+      --blue: #0b73ff;
+      --blue2: #2563eb;
+      --red: #ef4444;
+      --tab-height: 66px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%;
-      overflow: hidden; background: #050816; color: #f9fafb;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-      touch-action: manipulation; overscroll-behavior: none;
+      touch-action: manipulation;
+      overscroll-behavior: none;
     }
 
     body {
@@ -26,315 +46,1085 @@
       padding-right: env(safe-area-inset-right);
     }
 
+    button, label {
+      font-family: inherit;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
     .app {
-      width: 100vw; height: 100dvh; max-height: 100dvh;
-      display: flex; flex-direction: column; overflow: hidden; background: #050816;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: linear-gradient(180deg, #f7f9fd 0%, #eef3fb 100%);
     }
 
-    .topbar {
-      flex: 0 0 auto; height: 48px; padding: 6px 8px;
-      display: flex; align-items: center; gap: 6px;
-      background: #0b1020; border-bottom: 1px solid rgba(255,255,255,.08);
+    .page {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    .brand { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
-    .brand-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .brand-subtitle { margin-top: 2px; font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .toolbar { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; }
-
-    button, .file-btn {
-      height: 32px; border: 0; border-radius: 9px; padding: 0 9px;
-      background: #2563eb; color: #fff; font-size: 12px; font-weight: 600;
-      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-      white-space: nowrap; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    .page.active {
+      display: flex;
     }
 
-    button:active, .file-btn:active { transform: scale(.97); opacity: .86; }
-    button.secondary { background: #1f2937; }
-    button.danger { background: #991b1b; }
-    button.ghost { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); }
-    input[type="file"] { display: none; }
+    .play-page {
+      position: relative;
+      background: linear-gradient(180deg, #f7f9fd 0%, #eef3fb 100%);
+    }
 
-    .grid {
-      flex: 1 1 auto; min-height: 0; width: 100%;
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    .player-shell {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 8px 7px 7px;
+      overflow: hidden;
+    }
+
+    .player-grid {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       grid-template-rows: repeat(2, minmax(0, 1fr));
-      gap: 6px; padding: 6px; overflow: hidden;
+      gap: 7px;
     }
 
-    .cell {
-      position: relative; min-width: 0; min-height: 0; overflow: hidden;
-      border-radius: 12px; background: #000; border: 1px solid rgba(255,255,255,.1);
-      box-shadow: 0 6px 18px rgba(0,0,0,.28);
-      -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+    .screen-card {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 13px;
+      background: #020617;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.13);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+    }
+
+    .screen-card.cover video {
+      object-fit: cover;
     }
 
     .video-layer {
-      position: absolute; inset: 0; z-index: 1; background: #000; pointer-events: none;
-    }
-
-    .cell video {
-      width: 100%; height: 100%; display: block; object-fit: contain; background: #000;
-      pointer-events: none !important; -webkit-user-select: none; user-select: none;
-    }
-
-    .cell.cover video { object-fit: cover; }
-    .tap-layer { position: absolute; inset: 0; z-index: 6; background: transparent; cursor: pointer; }
-
-    .cell-head {
-      position: absolute; z-index: 8; top: 0; left: 0; right: 0; min-height: 30px;
-      padding: 5px 6px; display: flex; align-items: center; gap: 4px;
-      background: linear-gradient(to bottom, rgba(0,0,0,.78), rgba(0,0,0,0));
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: #000;
       pointer-events: none;
     }
 
-    .cell-title {
-      flex: 1; min-width: 0; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.94);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #000;
+      pointer-events: none !important;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .status {
-      position: absolute; z-index: 9; left: 6px; bottom: 7px; right: 138px;
-      font-size: 10px; color: rgba(255,255,255,.8);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,.75);
+    .screen-placeholder {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.22), transparent 34%),
+        radial-gradient(circle at 78% 72%, rgba(14, 165, 233, 0.18), transparent 32%),
+        linear-gradient(135deg, #0f172a, #111827 58%, #020617);
+      color: rgba(255, 255, 255, 0.86);
+      text-align: center;
+      pointer-events: none;
+      padding: 16px;
     }
 
-    .cell-actions {
-      position: absolute; z-index: 12; right: 5px; bottom: 5px;
-      display: flex; align-items: center; gap: 4px;
+    .placeholder-number {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 4px;
     }
 
-    .mini {
-      width: 30px; height: 28px; padding: 0; border-radius: 9px;
-      background: rgba(17,24,39,.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      font-size: 12px; border: 1px solid rgba(255,255,255,.14);
+    .placeholder-text {
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.70);
     }
 
-    .center-empty, .center-play {
-      position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center;
-      padding: 12px; text-align: center; color: #cbd5e1; font-size: 12px; line-height: 1.45;
-      background: radial-gradient(circle at center, rgba(37,99,235,.18), rgba(0,0,0,.88));
+    .screen-label {
+      position: absolute;
+      left: 9px;
+      top: 8px;
+      z-index: 8;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 12px;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      max-width: calc(100% - 18px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .screen-fade-top {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 54px;
+      z-index: 7;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent);
       pointer-events: none;
     }
 
-    .center-empty strong { display: block; margin-bottom: 5px; font-size: 18px; color: #fff; }
-    .center-play { background: transparent; }
-    .center-play.hidden { display: none; }
+    .tap-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .screen-actions {
+      position: absolute;
+      z-index: 32;
+      right: 6px;
+      bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 13px;
+      background: rgba(2, 6, 23, 0.42);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: opacity .25s ease;
+    }
+
+    .mini-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.74);
+      color: #fff;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0;
+    }
+
+    .mini-btn:active {
+      transform: scale(0.94);
+      background: rgba(37, 99, 235, 0.72);
+    }
+
+    .screen-status {
+      position: absolute;
+      left: 9px;
+      bottom: 12px;
+      right: 136px;
+      z-index: 9;
+      font-size: 10px;
+      line-height: 1.2;
+      color: rgba(255, 255, 255, 0.82);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.70);
+    }
 
     .big-play {
-      width: 46px; height: 46px; border-radius: 999px; border: 1px solid rgba(255,255,255,.24);
-      background: rgba(15,23,42,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 22px rgba(0,0,0,.3);
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .big-play.hidden {
+      display: none;
+    }
+
+    .big-play-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.70);
+      color: white;
+      font-size: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .quick-controls {
-      position: absolute; inset: 0; z-index: 14; display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.3); backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+      position: absolute;
+      inset: 0;
+      z-index: 36;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.28);
       pointer-events: none;
     }
 
-    .quick-controls.show { display: flex; }
-
-    .quick-panel {
-      width: min(92%, 300px); padding: 10px 12px 8px; border-radius: 18px;
-      background: rgba(15,23,42,.78); border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 10px 24px rgba(0,0,0,.35); pointer-events: auto;
+    .quick-controls.show {
+      display: flex;
     }
 
-    .quick-buttons { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+    .quick-panel {
+      width: min(92%, 288px);
+      padding: 10px 12px 8px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.76);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+
+    .quick-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
 
     .quick-btn {
-      width: 48px; height: 40px; border-radius: 999px; padding: 0;
-      background: rgba(2,6,23,.62); border: 1px solid rgba(255,255,255,.22);
-      color: #fff; font-size: 18px; box-shadow: 0 6px 14px rgba(0,0,0,.25);
+      width: 48px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.58);
+      color: #fff;
+      font-size: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .progress-row {
-      display: grid; grid-template-columns: 38px 1fr 38px; align-items: center; gap: 6px;
-      color: #d1d5db; font-size: 10px;
+      display: grid;
+      grid-template-columns: 38px 1fr 38px;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 10px;
     }
 
-    .progress-row input[type="range"] { width: 100%; height: 22px; accent-color: #60a5fa; }
-
-    .toast {
-      position: fixed; z-index: 99; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom));
-      transform: translateX(-50%); max-width: 86vw; padding: 9px 12px; border-radius: 999px;
-      background: rgba(15,23,42,.92); color: #fff; font-size: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.32);
-      display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .progress-row input[type="range"] {
+      width: 100%;
+      height: 20px;
+      accent-color: #60a5fa;
     }
 
-    .modal-mask {
-      position: fixed; inset: 0; z-index: 80; display: none; background: rgba(0,0,0,.62);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
+    /* 顶部悬浮工具栏：默认透明，悬浮/触摸后显示 */
+    .global-toolbar {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      width: 206px;
+      height: 52px;
+      transform: translateX(-50%);
+      z-index: 40;
+      border-radius: 999px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(226, 232, 240, 0.86);
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      opacity: 0.16;
+      transition: opacity 0.28s ease, transform 0.28s ease, background 0.28s ease;
     }
 
-    .modal-mask.show { display: flex; align-items: stretch; justify-content: center; }
-
-    .modal {
-      width: min(760px, 100%); height: 100%; border-radius: 16px; background: #0b1020;
-      border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 50px rgba(0,0,0,.45);
-      overflow: hidden; display: flex; flex-direction: column;
+    .global-toolbar.is-awake,
+    .global-toolbar:hover,
+    .global-toolbar:focus-within {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
-    .modal-head {
-      flex: 0 0 auto; min-height: 52px; padding: 9px 10px;
-      display: flex; align-items: center; gap: 8px;
-      border-bottom: 1px solid rgba(255,255,255,.08); background: #111827;
+    .global-toolbar.is-idle {
+      opacity: 0.16;
+      background: rgba(15, 23, 42, 0.44);
+      border-color: rgba(255, 255, 255, 0.10);
+      transform: translateX(-50%) translateY(-2px);
     }
 
-    .modal-title {
-      flex: 1; min-width: 0; font-size: 15px; font-weight: 800;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .global-toolbar.is-awake .global-icon-btn,
+    .global-toolbar:hover .global-icon-btn,
+    .global-toolbar:focus-within .global-icon-btn {
+      color: #111827;
     }
 
-    .modal-body {
-      flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 125px 1fr; overflow: hidden;
+    .global-toolbar.is-idle .global-icon-btn {
+      color: rgba(255, 255, 255, 0.92);
     }
 
-    .folder-pane {
-      min-width: 0; border-right: 1px solid rgba(255,255,255,.08);
-      background: #050816; overflow-y: auto; padding: 8px;
+    .global-icon-btn {
+      min-width: 0;
+      height: 52px;
+      padding: 0;
+      color: rgba(255,255,255,.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 900;
     }
 
-    .video-pane { min-width: 0; overflow-y: auto; padding: 8px; background: #0b1020; }
-
-    .folder-item, .video-item {
-      width: 100%; border-radius: 11px; padding: 9px; margin-bottom: 6px;
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06);
-      color: #e5e7eb; text-align: left; display: block; height: auto; white-space: normal;
+    .global-icon-btn:active {
+      background: rgba(219, 234, 254, 0.72);
     }
 
-    .folder-item.active { background: rgba(37,99,235,.3); border-color: rgba(96,165,250,.5); }
-    .folder-name, .video-name { font-size: 12px; font-weight: 700; overflow-wrap: anywhere; line-height: 1.35; }
-    .folder-count, .video-meta { margin-top: 3px; font-size: 10px; color: #9ca3af; line-height: 1.3; }
+    /* 底部手柄：改成更稳定的卡片式拖手 */
+    .tab-toggle-wrap {
+      position: absolute;
+      left: 50%;
+      z-index: 34;
+      transform: translateX(-50%);
+      transition: bottom 0.25s ease;
+    }
 
-    .video-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
-    .video-actions { display: flex; gap: 5px; align-items: center; }
+    .app:not(.tab-collapsed) .tab-toggle-wrap {
+      bottom: calc(var(--tab-height) + env(safe-area-inset-bottom) - 14px);
+    }
 
-    .small-btn {
-      height: 28px; padding: 0 9px; font-size: 11px; border-radius: 8px; background: #1f2937;
+    .app.tab-collapsed .tab-toggle-wrap {
+      bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .toolbar-handle {
+      width: 52px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(106, 122, 144, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.52);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .toolbar-handle:active {
+      transform: scale(0.96);
+      background: rgba(37, 99, 235, 0.80);
+    }
+
+    .handle-inner {
+      position: relative;
+      width: 24px;
+      height: 12px;
+    }
+
+    .handle-inner::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 16px;
+      height: 3px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .handle-inner::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 5px;
+      width: 7px;
+      height: 7px;
+      border-right: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: translateX(-50%) rotate(45deg);
+      transition: transform 0.22s ease, top 0.22s ease;
+    }
+
+    .app.tab-collapsed .handle-inner::after {
+      top: 6px;
+      transform: translateX(-50%) rotate(-135deg);
+    }
+
+    .app.is-locked .global-toolbar,
+    .app.is-locked .tab-toggle-wrap,
+    .app.is-locked .screen-actions,
+    .app.is-locked .quick-controls {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .app-header {
+      flex: 0 0 auto;
+      padding: 14px 16px 8px;
+      background: rgba(247, 249, 253, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.72);
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      min-height: 30px;
+    }
+
+    .header-title {
+      margin: 0;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      color: #111827;
+    }
+
+    .header-icon-btn {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      color: #111827;
+      font-size: 20px;
+    }
+
+    .library-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px 16px 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .folder-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 1px 2px 12px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .folder-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .folder-card {
+      flex: 0 0 108px;
+      height: 92px;
+      border-radius: 13px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+      padding: 11px 8px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #111827;
+    }
+
+    .folder-card.active {
+      border: 2px solid var(--blue);
+      background: #f8fbff;
+    }
+
+    .folder-icon {
+      font-size: 31px;
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+
+    .folder-name {
+      font-size: 12px;
+      font-weight: 800;
+      max-width: 88px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .folder-count {
+      margin-top: 3px;
+      font-size: 10px;
+      color: #6b7280;
+    }
+
+    .library-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 5px 0 18px;
+    }
+
+    .primary-action, .secondary-action {
+      height: 44px;
+      border-radius: 13px;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .primary-action {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23);
+    }
+
+    .secondary-action {
+      background: #fff;
+      color: var(--blue2);
+      border: 1px solid #dbeafe;
+    }
+
+    .video-list-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .folder-current {
+      font-size: 15px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .sort-text {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 12px;
+    }
+
+    .video-item {
+      min-height: 78px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 84px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .thumb {
+      position: relative;
+      width: 84px;
+      height: 58px;
+      border-radius: 9px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(14, 165, 233, 0.42), transparent 34%),
+        radial-gradient(circle at 80% 85%, rgba(59, 130, 246, 0.44), transparent 32%),
+        linear-gradient(135deg, #1e3a8a, #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 22px;
+    }
+
+    .thumb-duration {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      padding: 2px 5px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.70);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1.1;
+    }
+
+    .video-main {
+      min-width: 0;
+    }
+
+    .video-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111827;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .video-meta {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 7px;
+    }
+
+    .video-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .select-btn, .delete-btn {
+      height: 28px;
+      border-radius: 8px;
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .select-btn {
+      color: var(--blue2);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .delete-btn {
+      color: var(--red);
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
     }
 
     .empty-list {
-      height: 100%; display: flex; align-items: center; justify-content: center;
-      text-align: center; color: #9ca3af; font-size: 12px; line-height: 1.6; padding: 20px;
+      border-radius: 16px;
+      min-height: 160px;
+      background: #fff;
+      border: 1px dashed #cbd5e1;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.7;
+      padding: 20px;
+      font-size: 13px;
     }
 
-    @media (orientation: landscape) {
-      .app { flex-direction: row; }
-      .topbar {
-        width: 96px; height: 100%; flex-direction: column; align-items: stretch;
-        border-bottom: 0; border-right: 1px solid rgba(255,255,255,.08);
-      }
-      .brand { flex: 0 0 auto; }
-      .brand-title { font-size: 12px; white-space: normal; }
-      .brand-subtitle { display: none; }
-      .toolbar { flex-direction: column; align-items: stretch; width: 100%; }
-      button, .file-btn { width: 100%; height: 34px; padding: 0 6px; }
+    .tabbar {
+      flex: 0 0 auto;
+      height: calc(var(--tab-height) + env(safe-area-inset-bottom));
+      padding: 7px 36px calc(7px + env(safe-area-inset-bottom));
+      background: rgba(255, 255, 255, 0.94);
+      border-top: 1px solid rgba(226, 232, 240, 0.86);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      transition: height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
     }
 
-    @media (max-width: 430px) {
-      .brand-title { font-size: 13px; }
-      .brand-subtitle { display: none; }
-      button, .file-btn { height: 30px; padding: 0 7px; font-size: 11px; }
-      .grid { gap: 4px; padding: 4px; }
-      .cell { border-radius: 10px; }
-      .mini { width: 28px; height: 26px; border-radius: 8px; font-size: 11px; }
-      .big-play { width: 40px; height: 40px; font-size: 18px; }
-      .status { right: 128px; }
-      .modal-body { grid-template-columns: 105px 1fr; }
-      .modal-head { gap: 5px; }
+    .app.tab-collapsed .tabbar {
+      height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-top: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .tab {
+      border-radius: 15px;
+      color: #6b7280;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      gap: 2px;
+    }
+
+    .tab .tab-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .tab.active {
+      color: var(--blue);
+    }
+
+    .tab.active .tab-icon {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(11, 115, 255, 0.26);
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 100;
+      left: 50%;
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      max-width: 86vw;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+      display: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app.tab-collapsed .toast {
+      bottom: calc(58px + env(safe-area-inset-bottom));
+    }
+
+    .sheet-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      background: rgba(15, 23, 42, 0.38);
+      padding: 16px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .sheet-mask.show {
+      display: flex;
+    }
+
+    .sheet {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.25);
+      padding: 16px;
+    }
+
+    .sheet-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 10px;
+      color: #111827;
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .target-btn {
+      height: 42px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: var(--blue2);
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid #bfdbfe;
+    }
+
+    .sheet-cancel {
+      width: 100%;
+      height: 42px;
+      margin-top: 10px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.28);
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
+    }
+
+    .lock-overlay.show {
+      display: flex;
+    }
+
+    .unlock-panel {
+      min-width: 112px;
+      height: 86px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.26);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #fff;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .unlock-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 22px;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .unlock-text {
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255,255,255,.92);
+    }
+
+    @media (max-width: 390px) {
+      .player-shell { padding: 8px 7px 7px; }
+      .player-grid { gap: 6px; }
+      .mini-btn { width: 27px; height: 27px; font-size: 14px; }
+      .screen-actions { gap: 3px; }
+      .screen-status { right: 130px; }
+      .global-toolbar { width: 196px; height: 50px; top: 9px; }
+      .global-icon-btn { height: 50px; font-size: 21px; }
+      .tab-toggle-wrap { }
+      .toolbar-handle { width: 50px; height: 22px; }
+      .handle-inner { width: 23px; }
+      .app-header { padding: 12px 12px 8px; }
+      .header-title { font-size: 18px; }
+      .library-content { padding: 12px; }
+      .folder-card { flex-basis: 100px; }
+      .video-item { grid-template-columns: 78px minmax(0, 1fr); }
+      .thumb { width: 78px; }
+      .video-actions { gap: 5px; }
+      .select-btn, .delete-btn { padding: 0 7px; font-size: 11px; }
+      .tabbar { padding-left: 26px; padding-right: 26px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-title">四屏本地视频</div>
-        <div class="brand-subtitle">视频库 + 四屏播放</div>
-      </div>
-      <div class="toolbar">
-        <button class="secondary" id="libraryBtn" type="button">文件</button>
-        <label class="file-btn" for="multiInput">批量</label>
-        <input id="multiInput" type="file" accept="video/*" multiple />
-        <button class="secondary" id="playAllBtn" type="button">播放</button>
-        <button class="secondary" id="pauseAllBtn" type="button">暂停</button>
-        <button class="secondary" id="muteAllBtn" type="button">静音</button>
-        <button class="secondary" id="unmuteAllBtn" type="button">开声</button>
-        <button class="secondary" id="clearBtn" type="button">清空</button>
-      </div>
-    </header>
+  <div class="app" id="app">
+    <section id="playPage" class="page play-page active">
+      <main class="player-shell" id="playerShell">
+        <div class="player-grid" id="playerGrid"></div>
 
-    <main class="grid" id="grid"></main>
+        <div class="global-toolbar is-idle" id="globalToolbar" aria-label="全局播放控制">
+          <button class="global-icon-btn" id="togglePlayAllBtn" type="button" title="全部播放/暂停" aria-label="全部播放/暂停">
+            <span id="globalPlayIcon">▶</span>
+          </button>
+          <button class="global-icon-btn" id="toggleMuteAllBtn" type="button" title="全部静音/开声" aria-label="全部静音/开声">
+            <span id="globalMuteIcon">🔇</span>
+          </button>
+          <button class="global-icon-btn" id="clearBtn" type="button" title="清空" aria-label="清空">🗑</button>
+          <button class="global-icon-btn" id="lockBtn" type="button" title="锁定" aria-label="锁定">🔓</button>
+        </div>
+
+        <div class="tab-toggle-wrap" id="tabToggleWrap">
+          <button class="toolbar-handle" id="tabToggleBtn" type="button" aria-label="收起或展开底部导航">
+            <span class="handle-inner" aria-hidden="true"></span>
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <section id="libraryPage" class="page">
+      <header class="app-header">
+        <div class="header-row">
+          <h1 class="header-title" id="libraryTitle">视频文件管理</h1>
+          <button class="header-icon-btn" type="button" aria-label="搜索">⌕</button>
+        </div>
+      </header>
+
+      <main class="library-content">
+        <div class="section-title-row">
+          <div class="section-title">文件夹</div>
+        </div>
+
+        <div class="folder-strip" id="folderStrip"></div>
+
+        <div class="library-actions">
+          <button class="primary-action" id="newFolderBtn" type="button">📁 新建文件夹</button>
+          <label class="secondary-action" for="libraryAddInput">＋ 添加视频</label>
+          <input id="libraryAddInput" type="file" accept="video/*" multiple />
+        </div>
+
+        <div class="video-list-head">
+          <div class="folder-current" id="folderCurrent">默认文件夹 · 0 个视频</div>
+          <div class="sort-text">按名称⌄  ▦</div>
+        </div>
+
+        <div class="video-list" id="videoList"></div>
+      </main>
+    </section>
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab active" id="tabPlay" type="button">
+        <span class="tab-icon">▶</span>
+        <span>播放</span>
+      </button>
+      <button class="tab" id="tabLibrary" type="button">
+        <span class="tab-icon">📁</span>
+        <span>视频库</span>
+      </button>
+    </nav>
+
     <div class="toast" id="toast"></div>
 
-    <div class="modal-mask" id="libraryModal">
-      <section class="modal">
-        <header class="modal-head">
-          <div class="modal-title" id="libraryTitle">视频文件管理</div>
-          <button class="ghost" id="newFolderBtn" type="button">新建</button>
-          <label class="file-btn" for="libraryAddInput">添加</label>
-          <input id="libraryAddInput" type="file" accept="video/*" multiple />
-          <button class="secondary" id="closeLibraryBtn" type="button">关闭</button>
-        </header>
-        <div class="modal-body">
-          <aside class="folder-pane" id="folderList"></aside>
-          <section class="video-pane">
-            <div id="videoList"></div>
-          </section>
+    <div class="sheet-mask" id="targetSheet">
+      <div class="sheet">
+        <div class="sheet-title">选择要播放的屏幕</div>
+        <div class="target-grid">
+          <button class="target-btn" data-screen="0" type="button">屏幕1</button>
+          <button class="target-btn" data-screen="1" type="button">屏幕2</button>
+          <button class="target-btn" data-screen="2" type="button">屏幕3</button>
+          <button class="target-btn" data-screen="3" type="button">屏幕4</button>
         </div>
-      </section>
+        <button class="sheet-cancel" id="targetCancelBtn" type="button">取消</button>
+      </div>
+    </div>
+
+    <div class="lock-overlay" id="lockOverlay">
+      <button class="unlock-panel" id="unlockBtn" type="button" aria-label="点击解锁">
+        <div class="unlock-icon">🔒</div>
+        <div class="unlock-text">点击解锁</div>
+      </button>
     </div>
   </div>
 
   <script>
-    const grid = document.getElementById('grid');
-    const toast = document.getElementById('toast');
-    const multiInput = document.getElementById('multiInput');
-    const playAllBtn = document.getElementById('playAllBtn');
-    const pauseAllBtn = document.getElementById('pauseAllBtn');
-    const muteAllBtn = document.getElementById('muteAllBtn');
-    const unmuteAllBtn = document.getElementById('unmuteAllBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const libraryBtn = document.getElementById('libraryBtn');
-    const libraryModal = document.getElementById('libraryModal');
-    const libraryTitle = document.getElementById('libraryTitle');
-    const closeLibraryBtn = document.getElementById('closeLibraryBtn');
-    const newFolderBtn = document.getElementById('newFolderBtn');
-    const libraryAddInput = document.getElementById('libraryAddInput');
-    const folderList = document.getElementById('folderList');
-    const videoList = document.getElementById('videoList');
-
-    const DB_NAME = 'iphone_4_screen_video_library_v2';
+    const DB_NAME = 'iphone_4_screen_video_library_v7';
     const DB_VERSION = 1;
     const DEFAULT_FOLDER_ID = 'default';
 
+    const app = document.getElementById('app');
+    const playPage = document.getElementById('playPage');
+    const libraryPage = document.getElementById('libraryPage');
+    const tabPlay = document.getElementById('tabPlay');
+    const tabLibrary = document.getElementById('tabLibrary');
+    const playerGrid = document.getElementById('playerGrid');
+    const globalToolbar = document.getElementById('globalToolbar');
+    const tabToggleBtn = document.getElementById('tabToggleBtn');
+    const togglePlayAllBtn = document.getElementById('togglePlayAllBtn');
+    const toggleMuteAllBtn = document.getElementById('toggleMuteAllBtn');
+    const globalPlayIcon = document.getElementById('globalPlayIcon');
+    const globalMuteIcon = document.getElementById('globalMuteIcon');
+    const clearBtn = document.getElementById('clearBtn');
+    const lockBtn = document.getElementById('lockBtn');
+    const lockOverlay = document.getElementById('lockOverlay');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const toast = document.getElementById('toast');
+
+    const libraryTitle = document.getElementById('libraryTitle');
+    const folderStrip = document.getElementById('folderStrip');
+    const folderCurrent = document.getElementById('folderCurrent');
+    const videoList = document.getElementById('videoList');
+    const newFolderBtn = document.getElementById('newFolderBtn');
+    const libraryAddInput = document.getElementById('libraryAddInput');
+    const targetSheet = document.getElementById('targetSheet');
+    const targetCancelBtn = document.getElementById('targetCancelBtn');
+
     const players = [];
-    let toastTimer = null;
     let db = null;
     let folders = [];
     let currentFolderId = DEFAULT_FOLDER_ID;
     let currentVideos = [];
     let pendingPickScreen = null;
+    let pendingChooseVideoId = null;
     let globalMuted = true;
+    let isLocked = false;
+    let toolbarTimer = null;
+    let toastTimer = null;
 
-    function preventDefaultTouch(event) {
-      if (!event.target.closest('input') && !event.target.closest('label') && !event.target.closest('button') && !event.target.closest('.modal')) {
+    document.addEventListener('gesturestart', event => event.preventDefault());
+
+    document.addEventListener('touchmove', event => {
+      if (
+        !event.target.closest('input') &&
+        !event.target.closest('label') &&
+        !event.target.closest('button') &&
+        !event.target.closest('.library-content')
+      ) {
         event.preventDefault();
       }
-    }
-
-    document.addEventListener('gesturestart', function(event) {
-      event.preventDefault();
-    });
-
-    document.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    }, { passive: false });
 
     function showToast(message) {
       toast.textContent = message;
@@ -345,21 +1135,16 @@
       }, 1700);
     }
 
-    function shortName(name) {
-      if (!name) return '';
-      return name.length > 18 ? name.slice(0, 8) + '…' + name.slice(-7) : name;
-    }
-
     function formatSize(bytes) {
       if (!bytes && bytes !== 0) return '-';
       const units = ['B', 'KB', 'MB', 'GB'];
       let size = bytes;
-      let unitIndex = 0;
-      while (size >= 1024 && unitIndex < units.length - 1) {
-        size = size / 1024;
-        unitIndex++;
+      let idx = 0;
+      while (size >= 1024 && idx < units.length - 1) {
+        size /= 1024;
+        idx++;
       }
-      return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+      return `${size.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
     }
 
     function formatTime(seconds) {
@@ -371,16 +1156,105 @@
       return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
+    function shortName(name) {
+      if (!name) return '';
+      return name.length > 18 ? name.slice(0, 8) + '…' + name.slice(-7) : name;
+    }
+
     function createId(prefix) {
       return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     }
 
+    function anyPlaying() {
+      return players.some(player => player.file && !player.video.paused && !player.video.ended);
+    }
+
+    function updateGlobalIcons() {
+      globalPlayIcon.textContent = anyPlaying() ? '⏸' : '▶';
+      globalMuteIcon.textContent = globalMuted ? '🔇' : '🔊';
+      lockBtn.textContent = isLocked ? '🔒' : '🔓';
+    }
+
+    function wakeToolbar(autoHide = true) {
+      if (isLocked) return;
+      globalToolbar.classList.remove('is-idle');
+      globalToolbar.classList.add('is-awake');
+      clearTimeout(toolbarTimer);
+
+      if (autoHide) {
+        toolbarTimer = setTimeout(() => {
+          sleepToolbar();
+        }, 1800);
+      }
+    }
+
+    function sleepToolbar() {
+      globalToolbar.classList.remove('is-awake');
+      globalToolbar.classList.add('is-idle');
+    }
+
+    function showLockOverlay() {
+      lockOverlay.classList.add('show');
+    }
+
+    function hideLockOverlay() {
+      lockOverlay.classList.remove('show');
+    }
+
+    function setLocked(locked) {
+      isLocked = locked;
+      app.classList.toggle('is-locked', locked);
+      hideLockOverlay();
+      updateGlobalIcons();
+
+      if (locked) {
+        clearTimeout(toolbarTimer);
+        showToast('已锁定，点击屏幕显示解锁');
+      } else {
+        showToast('已解锁');
+        wakeToolbar(true);
+      }
+    }
+
+    function switchPage(page, pickScreen = null) {
+      if (isLocked) {
+        showLockOverlay();
+        return;
+      }
+
+      const isPlay = page === 'play';
+      playPage.classList.toggle('active', isPlay);
+      libraryPage.classList.toggle('active', !isPlay);
+      tabPlay.classList.toggle('active', isPlay);
+      tabLibrary.classList.toggle('active', !isPlay);
+
+      if (!isPlay) {
+        app.classList.remove('tab-collapsed');
+        pendingPickScreen = pickScreen;
+        libraryTitle.textContent = pickScreen === null ? '视频文件管理' : `选择视频到屏幕 ${pickScreen + 1}`;
+        refreshLibrary();
+      } else {
+        pendingPickScreen = null;
+        libraryTitle.textContent = '视频文件管理';
+        wakeToolbar(true);
+      }
+    }
+
+    function toggleTabCollapsed() {
+      if (isLocked) {
+        showLockOverlay();
+        return;
+      }
+      app.classList.toggle('tab-collapsed');
+      wakeToolbar(true);
+    }
+
     function forceInlineVideo(video) {
       video.controls = false;
-      video.defaultMuted = globalMuted;
-      video.muted = globalMuted;
       video.autoplay = false;
       video.playsInline = true;
+      video.defaultMuted = globalMuted;
+      video.muted = globalMuted;
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
       video.setAttribute('x5-playsinline', '');
@@ -395,7 +1269,7 @@
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onupgradeneeded = (event) => {
+        request.onupgradeneeded = event => {
           const database = event.target.result;
           if (!database.objectStoreNames.contains('folders')) {
             database.createObjectStore('folders', { keyPath: 'id' });
@@ -429,63 +1303,77 @@
     }
 
     async function ensureDefaultFolder() {
-      const transaction = tx(['folders'], 'readwrite');
-      const store = transaction.objectStore('folders');
+      const store = tx(['folders'], 'readwrite').objectStore('folders');
       const existing = await idbRequest(store.get(DEFAULT_FOLDER_ID));
       if (!existing) {
-        await idbRequest(store.put({
-          id: DEFAULT_FOLDER_ID,
-          name: '默认文件夹',
-          createdAt: Date.now()
-        }));
+        await idbRequest(store.put({ id: DEFAULT_FOLDER_ID, name: '默认文件夹', color: 'blue', createdAt: Date.now() }));
       }
     }
 
-    async function getAllFolders() {
-      const result = await idbRequest(tx(['folders']).objectStore('folders').getAll());
-      return result.sort((a, b) => a.createdAt - b.createdAt);
+    async function getFolders() {
+      const list = await idbRequest(tx(['folders']).objectStore('folders').getAll());
+      return list.sort((a, b) => a.createdAt - b.createdAt);
+    }
+
+    async function getAllVideos() {
+      return await idbRequest(tx(['videos']).objectStore('videos').getAll());
     }
 
     async function getVideosByFolder(folderId) {
       const index = tx(['videos']).objectStore('videos').index('folderId');
-      const result = await idbRequest(index.getAll(folderId));
-      return result.sort((a, b) => b.createdAt - a.createdAt);
+      const list = await idbRequest(index.getAll(folderId));
+      return list.sort((a, b) => b.createdAt - a.createdAt);
     }
 
-    async function addFolder(name) {
+    async function getVideoRecord(videoId) {
+      return await idbRequest(tx(['videos']).objectStore('videos').get(videoId));
+    }
+
+    async function addFolder() {
+      const name = prompt('请输入文件夹名称');
+      if (!name || !name.trim()) return;
+
+      const colors = ['blue', 'green', 'purple', 'orange'];
       const folder = {
         id: createId('folder'),
-        name,
+        name: name.trim(),
+        color: colors[Math.floor(Math.random() * colors.length)],
         createdAt: Date.now()
       };
+
       await idbRequest(tx(['folders'], 'readwrite').objectStore('folders').put(folder));
       currentFolderId = folder.id;
       await refreshLibrary();
       showToast('文件夹已创建');
     }
 
-    async function addVideosToLibrary(files) {
-      if (!files.length) return;
-      const store = tx(['videos'], 'readwrite').objectStore('videos');
-      let added = 0;
+    async function addVideos(files) {
+      const validFiles = Array.from(files || []).filter(file => file.type.startsWith('video/'));
+      if (!validFiles.length) {
+        showToast('没有可添加的视频文件');
+        return;
+      }
 
-      for (const file of files) {
-        if (!file.type.startsWith('video/')) continue;
+      const store = tx(['videos'], 'readwrite').objectStore('videos');
+      let idx = 0;
+
+      for (const file of validFiles) {
         const record = {
           id: createId('video'),
           folderId: currentFolderId,
           name: file.name,
-          size: file.size,
           type: file.type || 'video/mp4',
-          createdAt: Date.now() + added,
+          size: file.size,
+          duration: 0,
+          createdAt: Date.now() + idx,
           blob: file
         };
         await idbRequest(store.put(record));
-        added++;
+        idx++;
       }
 
       await refreshLibrary();
-      showToast(added ? `已添加 ${added} 个视频` : '没有可添加的视频文件');
+      showToast(`已添加 ${validFiles.length} 个视频`);
     }
 
     async function deleteVideo(videoId) {
@@ -495,48 +1383,59 @@
     }
 
     async function refreshLibrary() {
-      folders = await getAllFolders();
-      if (!folders.some(folder => folder.id === currentFolderId)) {
-        currentFolderId = DEFAULT_FOLDER_ID;
-      }
+      if (!db) return;
+      folders = await getFolders();
+      if (!folders.some(folder => folder.id === currentFolderId)) currentFolderId = DEFAULT_FOLDER_ID;
       currentVideos = await getVideosByFolder(currentFolderId);
       await renderFolders();
       renderVideos();
     }
 
+    function folderEmoji(color) {
+      if (color === 'green') return '🟩';
+      if (color === 'purple') return '🟪';
+      if (color === 'orange') return '🟧';
+      return '🟦';
+    }
+
     async function renderFolders() {
+      const videos = await getAllVideos();
       const counts = {};
-      const allVideos = await idbRequest(tx(['videos']).objectStore('videos').getAll());
-      allVideos.forEach(video => {
+      videos.forEach(video => {
         counts[video.folderId] = (counts[video.folderId] || 0) + 1;
       });
 
-      folderList.innerHTML = '';
+      folderStrip.innerHTML = '';
+
       folders.forEach(folder => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `folder-item ${folder.id === currentFolderId ? 'active' : ''}`;
-        button.innerHTML = `
-          <div class="folder-name">📁 ${folder.name}</div>
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `folder-card ${folder.id === currentFolderId ? 'active' : ''}`;
+        card.innerHTML = `
+          <div class="folder-icon">${folderEmoji(folder.color)}</div>
+          <div class="folder-name">${folder.name}</div>
           <div class="folder-count">${counts[folder.id] || 0} 个视频</div>
         `;
-        button.addEventListener('click', async () => {
+        card.addEventListener('click', async () => {
           currentFolderId = folder.id;
           currentVideos = await getVideosByFolder(currentFolderId);
           await renderFolders();
           renderVideos();
         });
-        folderList.appendChild(button);
+        folderStrip.appendChild(card);
       });
     }
 
     function renderVideos() {
+      const folder = folders.find(item => item.id === currentFolderId);
+      folderCurrent.textContent = `${folder ? folder.name : '默认文件夹'} · ${currentVideos.length} 个视频`;
       videoList.innerHTML = '';
 
       if (!currentVideos.length) {
         videoList.innerHTML = `
           <div class="empty-list">
-            当前文件夹暂无视频。<br />点击顶部“添加”，从手机文件中选择视频加入当前文件夹。
+            当前文件夹暂无视频。<br>
+            点击“添加视频”，从手机文件中选择视频加入当前文件夹。
           </div>
         `;
         return;
@@ -545,108 +1444,101 @@
       currentVideos.forEach(video => {
         const item = document.createElement('div');
         item.className = 'video-item';
-        const useButton = pendingPickScreen !== null
-          ? `<button class="small-btn" type="button" data-action="use">使用</button>`
-          : '';
+        const actionText = pendingPickScreen === null ? '选择到屏幕' : '使用';
 
         item.innerHTML = `
-          <div>
-            <div class="video-name">🎬 ${video.name}</div>
-            <div class="video-meta">${formatSize(video.size)} · ${video.type || 'video'} · ${new Date(video.createdAt).toLocaleDateString()}</div>
+          <div class="thumb">
+            🎬
+            <span class="thumb-duration">${video.duration ? formatTime(video.duration) : '--:--'}</span>
           </div>
-          <div class="video-actions">
-            ${useButton}
-            <button class="small-btn danger" type="button" data-action="delete">删</button>
+          <div class="video-main">
+            <div class="video-name">${video.name}</div>
+            <div class="video-meta">${video.duration ? formatTime(video.duration) : '未知时长'} · ${formatSize(video.size)}</div>
+            <div class="video-actions">
+              <button class="select-btn" type="button" data-action="select">▣ ${actionText}</button>
+              <button class="delete-btn" type="button" data-action="delete">🗑 删除</button>
+            </div>
           </div>
         `;
 
-        const useBtn = item.querySelector('[data-action="use"]');
-        if (useBtn) {
-          useBtn.addEventListener('click', async () => {
+        item.querySelector('[data-action="select"]').addEventListener('click', async () => {
+          if (pendingPickScreen !== null) {
             await loadLibraryVideoToPlayer(pendingPickScreen, video.id);
-            closeLibrary();
-          });
-        }
+            switchPage('play');
+          } else {
+            pendingChooseVideoId = video.id;
+            targetSheet.classList.add('show');
+          }
+        });
 
         item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
-          if (confirm(`确定删除「${video.name}」吗？`)) {
-            await deleteVideo(video.id);
-          }
+          if (confirm(`确定删除「${video.name}」吗？`)) await deleteVideo(video.id);
         });
 
         videoList.appendChild(item);
       });
     }
 
-    async function getVideoRecord(videoId) {
-      return await idbRequest(tx(['videos']).objectStore('videos').get(videoId));
-    }
-
-    function createCell(index) {
-      const cell = document.createElement('section');
-      cell.className = 'cell';
-      cell.innerHTML = `
+    function createPlayer(index) {
+      const card = document.createElement('section');
+      card.className = 'screen-card';
+      card.innerHTML = `
         <div class="video-layer">
-          <video id="video-${index}" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" x5-video-player-fullscreen="false" preload="metadata" disablePictureInPicture controlsList="nofullscreen nodownload noremoteplayback"></video>
+          <video muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" x5-video-player-fullscreen="false" preload="metadata" disablePictureInPicture controlsList="nofullscreen nodownload noremoteplayback"></video>
         </div>
-        <div class="tap-layer" id="tap-${index}"></div>
-        <div class="cell-head">
-          <div class="cell-title" id="title-${index}">屏幕 ${index + 1}</div>
+        <div class="tap-layer"></div>
+        <div class="screen-fade-top"></div>
+        <div class="screen-label">屏幕${index + 1}</div>
+        <div class="screen-placeholder">
+          <div class="placeholder-number">${index + 1}</div>
+          <div class="placeholder-text">点右下角 ＋<br>从视频库选择</div>
         </div>
-        <div class="center-empty" id="empty-${index}">
-          <div>
-            <strong>${index + 1}</strong>
-            点右下角 ＋<br />从视频库选择
-          </div>
-        </div>
-        <div class="center-play hidden" id="centerPlay-${index}">
-          <div class="big-play">▶</div>
-        </div>
-        <div class="quick-controls" id="quick-${index}">
+        <div class="big-play hidden"><div class="big-play-icon">▶</div></div>
+        <div class="quick-controls">
           <div class="quick-panel">
             <div class="quick-buttons">
-              <button class="quick-btn" id="back-${index}" type="button">⏪</button>
-              <button class="quick-btn" id="mid-${index}" type="button">⏸</button>
-              <button class="quick-btn" id="forward-${index}" type="button">⏩</button>
+              <button class="quick-btn" data-role="back" type="button">⏪</button>
+              <button class="quick-btn" data-role="middle" type="button">⏸</button>
+              <button class="quick-btn" data-role="forward" type="button">⏩</button>
             </div>
             <div class="progress-row">
-              <span id="current-${index}">00:00</span>
-              <input id="progress-${index}" type="range" min="0" max="0" value="0" step="0.1" />
-              <span id="duration-${index}">00:00</span>
+              <span data-role="current">00:00</span>
+              <input data-role="progress" type="range" min="0" max="0" value="0" step="0.1" />
+              <span data-role="duration">00:00</span>
             </div>
           </div>
         </div>
-        <div class="status" id="status-${index}">未选择</div>
-        <div class="cell-actions">
-          <button class="mini" id="pick-${index}" title="从视频库选择" type="button">＋</button>
-          <button class="mini" id="play-${index}" title="播放/暂停" type="button">▶</button>
-          <button class="mini" id="mute-${index}" title="静音" type="button">🔈</button>
-          <button class="mini" id="fit-${index}" title="填充/适应" type="button">⛶</button>
+        <div class="screen-status">未选择</div>
+        <div class="screen-actions">
+          <button class="mini-btn" data-role="pick" type="button">＋</button>
+          <button class="mini-btn" data-role="play" type="button">▶</button>
+          <button class="mini-btn" data-role="mute" type="button">🔈</button>
+          <button class="mini-btn" data-role="fit" type="button">⛶</button>
         </div>
       `;
 
-      grid.appendChild(cell);
+      playerGrid.appendChild(card);
 
       const player = {
         index,
-        cell,
-        tapLayer: cell.querySelector(`#tap-${index}`),
-        video: cell.querySelector(`#video-${index}`),
-        title: cell.querySelector(`#title-${index}`),
-        empty: cell.querySelector(`#empty-${index}`),
-        centerPlay: cell.querySelector(`#centerPlay-${index}`),
-        quick: cell.querySelector(`#quick-${index}`),
-        status: cell.querySelector(`#status-${index}`),
-        pickBtn: cell.querySelector(`#pick-${index}`),
-        playBtn: cell.querySelector(`#play-${index}`),
-        muteBtn: cell.querySelector(`#mute-${index}`),
-        fitBtn: cell.querySelector(`#fit-${index}`),
-        backBtn: cell.querySelector(`#back-${index}`),
-        midBtn: cell.querySelector(`#mid-${index}`),
-        forwardBtn: cell.querySelector(`#forward-${index}`),
-        progress: cell.querySelector(`#progress-${index}`),
-        currentTimeLabel: cell.querySelector(`#current-${index}`),
-        durationLabel: cell.querySelector(`#duration-${index}`),
+        card,
+        video: card.querySelector('video'),
+        tapLayer: card.querySelector('.tap-layer'),
+        label: card.querySelector('.screen-label'),
+        placeholder: card.querySelector('.screen-placeholder'),
+        bigPlay: card.querySelector('.big-play'),
+        quick: card.querySelector('.quick-controls'),
+        status: card.querySelector('.screen-status'),
+        pickBtn: card.querySelector('[data-role="pick"]'),
+        playBtn: card.querySelector('[data-role="play"]'),
+        muteBtn: card.querySelector('[data-role="mute"]'),
+        fitBtn: card.querySelector('[data-role="fit"]'),
+        backBtn: card.querySelector('[data-role="back"]'),
+        middleBtn: card.querySelector('[data-role="middle"]'),
+        forwardBtn: card.querySelector('[data-role="forward"]'),
+        currentLabel: card.querySelector('[data-role="current"]'),
+        durationLabel: card.querySelector('[data-role="duration"]'),
+        progress: card.querySelector('[data-role="progress"]'),
         objectUrl: null,
         file: null,
         quickTimer: null,
@@ -655,76 +1547,90 @@
 
       forceInlineVideo(player.video);
 
-      player.pickBtn.addEventListener('click', async (event) => {
+      player.pickBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        pendingPickScreen = index;
-        await openLibrary(index);
+        if (isLocked) return showLockOverlay();
+        switchPage('library', index);
       });
 
-      player.playBtn.addEventListener('click', (event) => {
+      player.playBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         togglePlay(index);
       });
 
-      player.tapLayer.addEventListener('pointerup', (event) => {
+      player.tapLayer.addEventListener('pointerup', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         handleCellTap(index);
       });
 
-      player.muteBtn.addEventListener('click', (event) => {
+      player.muteBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         toggleMute(index);
       });
 
-      player.fitBtn.addEventListener('click', (event) => {
+      player.fitBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        player.cell.classList.toggle('cover');
-        showToast(`屏幕 ${index + 1}：${player.cell.classList.contains('cover') ? '填充画面' : '完整显示'}`);
+        if (isLocked) return showLockOverlay();
+        player.card.classList.toggle('cover');
+        showToast(`屏幕${index + 1}：${player.card.classList.contains('cover') ? '填充画面' : '完整显示'}`);
       });
 
-      player.backBtn.addEventListener('click', (event) => {
+      player.backBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         seekBy(index, -10);
       });
 
-      player.forwardBtn.addEventListener('click', (event) => {
+      player.forwardBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         seekBy(index, 10);
       });
 
-      player.midBtn.addEventListener('click', (event) => {
+      player.middleBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         togglePlay(index);
       });
 
-      player.progress.addEventListener('pointerdown', (event) => {
+      player.progress.addEventListener('pointerdown', event => {
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         player.isScrubbing = true;
         showQuickControls(index);
       });
 
-      player.progress.addEventListener('input', (event) => {
+      player.progress.addEventListener('input', event => {
         event.stopPropagation();
-        if (Number.isFinite(player.video.duration)) {
-          player.video.currentTime = Number(player.progress.value);
+        if (isLocked) return showLockOverlay();
+        const value = Number(player.progress.value);
+        if (Number.isFinite(player.video.duration) && Number.isFinite(value)) {
+          player.video.currentTime = value;
           updateProgress(index);
         }
         showQuickControls(index);
       });
 
-      player.progress.addEventListener('change', (event) => {
+      player.progress.addEventListener('change', event => {
         event.stopPropagation();
+        if (isLocked) return showLockOverlay();
         player.isScrubbing = false;
         showQuickControls(index);
       });
+
+      player.video.addEventListener('loadedmetadata', () => updateProgress(index));
+      player.video.addEventListener('timeupdate', () => updateProgress(index));
 
       player.video.addEventListener('webkitbeginfullscreen', () => {
         try {
@@ -734,42 +1640,30 @@
         } catch (e) {}
       });
 
-      player.video.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement === player.video && document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      });
-
-      player.video.addEventListener('loadedmetadata', () => updateProgress(index));
-      player.video.addEventListener('timeupdate', () => updateProgress(index));
-
       player.video.addEventListener('play', () => {
         player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
         player.playBtn.textContent = '⏸';
-        player.midBtn.textContent = '⏸';
-        player.centerPlay.classList.add('hidden');
+        player.middleBtn.textContent = '⏸';
+        player.bigPlay.classList.add('hidden');
+        updateGlobalIcons();
       });
 
       player.video.addEventListener('pause', () => {
-        if (player.file) {
-          player.status.textContent = '已暂停';
-          player.playBtn.textContent = '▶';
-          player.midBtn.textContent = '▶';
-          player.centerPlay.classList.remove('hidden');
-        }
+        if (!player.file) return;
+        player.status.textContent = '已暂停';
+        player.playBtn.textContent = '▶';
+        player.middleBtn.textContent = '▶';
+        player.bigPlay.classList.remove('hidden');
+        updateGlobalIcons();
       });
 
       player.video.addEventListener('ended', () => {
         player.status.textContent = '播放结束';
         player.playBtn.textContent = '▶';
-        player.midBtn.textContent = '▶';
-        player.centerPlay.classList.remove('hidden');
+        player.middleBtn.textContent = '▶';
+        player.bigPlay.classList.remove('hidden');
         hideQuickControls(index);
-      });
-
-      player.video.addEventListener('error', () => {
-        player.status.textContent = '格式不支持';
-        showToast('该视频格式可能不被 iPhone Safari 支持');
+        updateGlobalIcons();
       });
 
       players.push(player);
@@ -777,22 +1671,19 @@
 
     function updateProgress(index) {
       const player = players[index];
-      if (!player) return;
       const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
       const current = Number.isFinite(player.video.currentTime) ? player.video.currentTime : 0;
+
       player.progress.max = duration || 0;
-      if (!player.isScrubbing) {
-        player.progress.value = current || 0;
-      }
-      player.currentTimeLabel.textContent = formatTime(current);
+      if (!player.isScrubbing) player.progress.value = current || 0;
+      player.currentLabel.textContent = formatTime(current);
       player.durationLabel.textContent = formatTime(duration);
     }
 
     function handleCellTap(index) {
       const player = players[index];
       if (!player.file) {
-        pendingPickScreen = index;
-        openLibrary(index);
+        switchPage('library', index);
         return;
       }
 
@@ -821,7 +1712,6 @@
 
     function seekBy(index, seconds) {
       const player = players[index];
-      if (!player || !player.file) return;
       const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
       const next = Math.max(0, Math.min(duration, player.video.currentTime + seconds));
       player.video.currentTime = next;
@@ -829,13 +1719,11 @@
       showQuickControls(index);
     }
 
-    function loadFile(index, file, fromLibrary) {
+    function loadFile(index, file) {
       const player = players[index];
       if (!player) return;
 
-      if (player.objectUrl) {
-        URL.revokeObjectURL(player.objectUrl);
-      }
+      if (player.objectUrl) URL.revokeObjectURL(player.objectUrl);
 
       forceInlineVideo(player.video);
 
@@ -844,36 +1732,38 @@
       player.file = file;
       player.video.src = url;
       player.video.load();
-      player.title.textContent = shortName(file.name);
-      player.status.textContent = fromLibrary ? '已从视频库载入' : '已载入 · 未入库';
-      player.empty.style.display = 'none';
-      player.centerPlay.classList.remove('hidden');
+
+      player.label.textContent = shortName(file.name);
+      player.status.textContent = '已从视频库载入';
+      player.placeholder.style.display = 'none';
+      player.bigPlay.classList.remove('hidden');
       player.playBtn.textContent = '▶';
-      player.midBtn.textContent = '▶';
+      player.middleBtn.textContent = '▶';
       player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
-      player.currentTimeLabel.textContent = '00:00';
-      player.durationLabel.textContent = '00:00';
       player.progress.value = 0;
       player.progress.max = 0;
+      player.currentLabel.textContent = '00:00';
+      player.durationLabel.textContent = '00:00';
       hideQuickControls(index);
-      showToast(`屏幕 ${index + 1} 已载入视频`);
+      updateGlobalIcons();
+
+      showToast(`屏幕${index + 1} 已载入视频`);
     }
 
     async function loadLibraryVideoToPlayer(index, videoId) {
       const record = await getVideoRecord(videoId);
       if (!record) {
-        showToast('视频不存在或已被删除');
+        showToast('视频不存在或已删除');
         return;
       }
       const file = new File([record.blob], record.name, { type: record.type || 'video/mp4' });
-      loadFile(index, file, true);
+      loadFile(index, file);
     }
 
     function togglePlay(index) {
       const player = players[index];
-      if (!player || !player.file) {
-        pendingPickScreen = index;
-        openLibrary(index);
+      if (!player.file) {
+        switchPage('library', index);
         return;
       }
 
@@ -881,9 +1771,9 @@
       player.video.muted = globalMuted ? true : player.video.muted;
 
       if (player.video.paused || player.video.ended) {
-        const playPromise = player.video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {
+        const promise = player.video.play();
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(() => {
             player.status.textContent = '需再次点击播放';
             showToast('iPhone 阻止播放，请再点一次当前窗口的 ▶');
           });
@@ -891,6 +1781,8 @@
       } else {
         player.video.pause();
       }
+      wakeToolbar(true);
+      updateGlobalIcons();
     }
 
     function toggleMute(index) {
@@ -898,42 +1790,51 @@
       player.video.muted = !player.video.muted;
       player.video.defaultMuted = player.video.muted;
       player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
-      if (!player.video.paused) {
+      if (player.file && !player.video.paused) {
         player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
       }
-      showToast(`屏幕 ${index + 1}：${player.video.muted ? '已静音' : '已开启声音'}`);
+      showToast(`屏幕${index + 1}：${player.video.muted ? '已静音' : '已开声'}`);
     }
 
     function playAll() {
       let count = 0;
-      players.forEach((player) => {
-        if (player.file) {
-          count++;
-          forceInlineVideo(player.video);
-          player.video.muted = globalMuted ? true : player.video.muted;
-          const playPromise = player.video.play();
-          if (playPromise && typeof playPromise.catch === 'function') {
-            playPromise.catch(() => {
-              player.status.textContent = '需手动播放';
-              player.playBtn.textContent = '▶';
-              player.centerPlay.classList.remove('hidden');
-            });
-          }
+      players.forEach(player => {
+        if (!player.file) return;
+        count++;
+        forceInlineVideo(player.video);
+        player.video.muted = globalMuted ? true : player.video.muted;
+        const promise = player.video.play();
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(() => {
+            player.status.textContent = '需手动播放';
+          });
         }
       });
-      showToast(count ? '已尝试播放四个窗口' : '请先选择视频');
+      showToast(count ? '已尝试播放全部屏幕' : '请先选择视频');
+      updateGlobalIcons();
     }
 
     function pauseAll() {
-      players.forEach((player) => {
+      players.forEach(player => {
         if (player.file) player.video.pause();
       });
-      showToast('已暂停全部视频');
+      showToast('已暂停全部屏幕');
+      updateGlobalIcons();
+    }
+
+    function toggleGlobalPlayPause() {
+      if (isLocked) return showLockOverlay();
+      if (anyPlaying()) {
+        pauseAll();
+      } else {
+        playAll();
+      }
+      wakeToolbar(true);
     }
 
     function setMuteAll(muted) {
       globalMuted = muted;
-      players.forEach((player) => {
+      players.forEach(player => {
         player.video.muted = muted;
         player.video.defaultMuted = muted;
         player.muteBtn.textContent = muted ? '🔈' : '🔇';
@@ -941,11 +1842,18 @@
           player.status.textContent = muted ? '播放中 · 静音' : '播放中';
         }
       });
-      showToast(muted ? '已全部静音' : '已全部开启声音');
+      showToast(muted ? '已全部静音' : '已全部开声');
+      updateGlobalIcons();
+    }
+
+    function toggleGlobalMute() {
+      if (isLocked) return showLockOverlay();
+      setMuteAll(!globalMuted);
+      wakeToolbar(true);
     }
 
     function clearAll() {
-      players.forEach((player) => {
+      players.forEach(player => {
         player.video.pause();
         if (player.objectUrl) URL.revokeObjectURL(player.objectUrl);
         player.objectUrl = null;
@@ -953,109 +1861,124 @@
         player.video.removeAttribute('src');
         player.video.load();
         forceInlineVideo(player.video);
-        player.title.textContent = `屏幕 ${player.index + 1}`;
+        player.label.textContent = `屏幕${player.index + 1}`;
         player.status.textContent = '未选择';
-        player.empty.style.display = 'flex';
-        player.centerPlay.classList.add('hidden');
+        player.placeholder.style.display = 'flex';
+        player.bigPlay.classList.add('hidden');
         player.playBtn.textContent = '▶';
-        player.midBtn.textContent = '▶';
+        player.middleBtn.textContent = '▶';
         player.muteBtn.textContent = globalMuted ? '🔈' : '🔇';
-        player.currentTimeLabel.textContent = '00:00';
-        player.durationLabel.textContent = '00:00';
         player.progress.value = 0;
         player.progress.max = 0;
+        player.currentLabel.textContent = '00:00';
+        player.durationLabel.textContent = '00:00';
         hideQuickControls(player.index);
       });
-      multiInput.value = '';
-      showToast('已清空');
+      showToast('已清空全部屏幕');
+      updateGlobalIcons();
     }
 
-    async function openLibrary(targetScreenIndex = null) {
-      pendingPickScreen = targetScreenIndex;
-      libraryTitle.textContent = targetScreenIndex === null
-        ? '视频文件管理'
-        : `选择视频到屏幕 ${targetScreenIndex + 1}`;
-      libraryModal.classList.add('show');
-      await refreshLibrary();
-    }
+    tabPlay.addEventListener('click', () => switchPage('play'));
+    tabLibrary.addEventListener('click', () => switchPage('library'));
 
-    function closeLibrary() {
-      libraryModal.classList.remove('show');
-      pendingPickScreen = null;
-      libraryTitle.textContent = '视频文件管理';
-    }
-
-    multiInput.addEventListener('change', (event) => {
-      const files = Array.from(event.target.files || []).slice(0, 4);
-      if (!files.length) return;
-      files.forEach((file, index) => loadFile(index, file, false));
-    });
-
-    libraryAddInput.addEventListener('change', async (event) => {
-      const files = Array.from(event.target.files || []);
-      await addVideosToLibrary(files);
-      libraryAddInput.value = '';
-    });
-
-    libraryBtn.addEventListener('click', async (event) => {
+    tabToggleBtn.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      await openLibrary(null);
+      toggleTabCollapsed();
     });
 
-    closeLibraryBtn.addEventListener('click', closeLibrary);
-
-    newFolderBtn.addEventListener('click', async () => {
-      const name = prompt('请输入文件夹名称');
-      if (!name || !name.trim()) return;
-      await addFolder(name.trim());
+    globalToolbar.addEventListener('mouseenter', () => {
+      if (isLocked) return;
+      wakeToolbar(false);
     });
 
-    playAllBtn.addEventListener('click', (event) => {
-      event.preventDefault();
+    globalToolbar.addEventListener('mouseleave', () => {
+      if (isLocked) return;
+      sleepToolbar();
+    });
+
+    globalToolbar.addEventListener('pointerdown', () => {
+      if (isLocked) return;
+      wakeToolbar(true);
+    });
+
+    togglePlayAllBtn.addEventListener('click', event => {
       event.stopPropagation();
-      playAll();
+      toggleGlobalPlayPause();
     });
 
-    pauseAllBtn.addEventListener('click', (event) => {
-      event.preventDefault();
+    toggleMuteAllBtn.addEventListener('click', event => {
       event.stopPropagation();
-      pauseAll();
+      toggleGlobalMute();
     });
 
-    muteAllBtn.addEventListener('click', (event) => {
-      event.preventDefault();
+    clearBtn.addEventListener('click', event => {
       event.stopPropagation();
-      setMuteAll(true);
-    });
-
-    unmuteAllBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setMuteAll(false);
-    });
-
-    clearBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+      if (isLocked) return showLockOverlay();
+      wakeToolbar(true);
       clearAll();
     });
 
-    libraryModal.addEventListener('click', (event) => {
-      if (event.target === libraryModal) closeLibrary();
+    lockBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      if (isLocked) return showLockOverlay();
+      setLocked(true);
+    });
+
+    unlockBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      setLocked(false);
+    });
+
+    lockOverlay.addEventListener('click', event => {
+      if (event.target === lockOverlay) hideLockOverlay();
+    });
+
+    newFolderBtn.addEventListener('click', addFolder);
+
+    libraryAddInput.addEventListener('change', async event => {
+      await addVideos(event.target.files);
+      libraryAddInput.value = '';
+    });
+
+    targetSheet.addEventListener('click', event => {
+      if (event.target === targetSheet) targetSheet.classList.remove('show');
+    });
+
+    targetCancelBtn.addEventListener('click', () => {
+      targetSheet.classList.remove('show');
+      pendingChooseVideoId = null;
+    });
+
+    targetSheet.querySelectorAll('[data-screen]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const screen = Number(button.dataset.screen);
+        if (pendingChooseVideoId) {
+          await loadLibraryVideoToPlayer(screen, pendingChooseVideoId);
+          targetSheet.classList.remove('show');
+          pendingChooseVideoId = null;
+          switchPage('play');
+        }
+      });
+    });
+
+    document.addEventListener('pointerdown', event => {
+      if (!isLocked) return;
+      const insideUnlock = event.target.closest('#unlockBtn');
+      if (!insideUnlock) showLockOverlay();
     });
 
     async function init() {
-      for (let i = 0; i < 4; i++) {
-        createCell(i);
-      }
+      for (let i = 0; i < 4; i++) createPlayer(i);
       try {
         await openDb();
         await refreshLibrary();
       } catch (error) {
         console.error(error);
-        showToast('文件管理初始化失败，仍可直接批量选择视频播放');
+        showToast('视频库初始化失败，请检查浏览器权限');
       }
+      updateGlobalIcons();
+      sleepToolbar();
     }
 
     init();
