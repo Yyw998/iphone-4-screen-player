@@ -242,7 +242,7 @@
   </div>
 
   <script>
-    const DB_NAME = 'video_lib_v14';
+    const DB_NAME = 'video_lib_v15';
     let db = null, folders = [], currentFolderId = 'default', currentVideos = [];
     let isLocked = false, globalMuted = true;
     let pendingScreenIndex = null;
@@ -301,7 +301,50 @@
       return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     }
 
-    // 初始化全局图标
+    // 初始化提取封面截图方法 (纯前端抽帧)
+    function extractVideoFrame(file) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.autoplay = false;
+        video.muted = true;
+        video.playsInline = true;
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        
+        // 设置3秒超时，防止个别无法解码的视频卡住
+        const timeout = setTimeout(() => {
+          resolve(null);
+          URL.revokeObjectURL(url);
+        }, 3000);
+
+        video.onloadedmetadata = () => {
+          video.currentTime = 0.1; // 取 0.1 秒处的画面
+        };
+        
+        video.onseeked = () => {
+          clearTimeout(timeout);
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 240;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 压缩图片减小数据库占用
+            resolve(canvas.toDataURL('image/jpeg', 0.5));
+          } catch(e) {
+            resolve(null);
+          }
+          URL.revokeObjectURL(url);
+        };
+        
+        video.onerror = () => {
+          clearTimeout(timeout);
+          resolve(null);
+          URL.revokeObjectURL(url);
+        };
+      });
+    }
+
     document.getElementById('iconClear').innerHTML = ICONS.trash;
 
     // --- DB操作 ---
@@ -373,6 +416,7 @@
         const player = {
           index: i,
           video: div.querySelector('video'),
+          card: div,
           placeholder: div.querySelector('.screen-placeholder'),
           tapLayer: div.querySelector('.tap-layer'),
           controls: div.querySelector('.screen-controls'),
@@ -428,11 +472,18 @@
         player.btnFf.addEventListener('click', () => player.video.currentTime = Math.min(player.video.duration, player.video.currentTime + 10));
         player.btnSwitch.addEventListener('click', () => openQuickPicker(i));
         
-        // --- 核心修改：横竖屏切换逻辑 ---
+        // --- 核心优化点1：横向正确旋转并铺满卡片 ---
         player.btnFit.addEventListener('click', () => {
           player.isRotated = !player.isRotated;
-          // 直接利用 CSS transform 实现 90度旋转，无损应对错向视频
-          player.video.style.transform = player.isRotated ? 'rotate(-90deg)' : 'none';
+          if (player.isRotated) {
+            // 获取单屏容器长宽，动态计算让视频填满容器所需要的比例
+            const rect = player.card.getBoundingClientRect();
+            const scale = Math.max(rect.width / rect.height, rect.height / rect.width);
+            // 正向顺时针 90 度旋转，并等比缩放至铺满全屏
+            player.video.style.transform = `rotate(90deg) scale(${scale})`;
+          } else {
+            player.video.style.transform = 'none';
+          }
           player.btnFit.innerHTML = player.isRotated ? `${ICONS.rotate} <span>竖屏</span>` : `${ICONS.rotate} <span>横屏</span>`;
         });
 
@@ -594,7 +645,10 @@
       videos.forEach(v => {
         const item = document.createElement('div');
         item.className = 'qs-item';
-        item.innerHTML = `<div class="qs-thumb">${ICONS.film}</div><div class="qs-name">${v.name}</div>`;
+        // 核心优化点2：显示提取的封面图片
+        const thumbContent = v.thumb ? `<img src="${v.thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">` : ICONS.film;
+        item.innerHTML = `<div class="qs-thumb">${thumbContent}</div><div class="qs-name">${v.name}</div>`;
+        
         item.addEventListener('click', () => {
           const p = players[pendingScreenIndex];
           p.file = v.blob;
@@ -639,8 +693,11 @@
       currentVideos.forEach(v => {
         const el = document.createElement('div');
         el.className = 'video-item';
+        // 核心优化点2：显示提取的封面图片
+        const thumbContent = v.thumb ? `<img src="${v.thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:9px;">` : ICONS.film;
+        
         el.innerHTML = `
-          <div class="thumb">${ICONS.film}</div>
+          <div class="thumb" style="padding:0; overflow:hidden;">${thumbContent}</div>
           <div class="video-main">
             <div class="video-name">${v.name}</div>
             <div class="video-meta">${(v.blob.size / 1024 / 1024).toFixed(1)} MB · ${new Date(v.createdAt).toLocaleDateString()}</div>
@@ -666,16 +723,38 @@
       }
     });
 
-    document.getElementById('fileInput').addEventListener('change', e => {
+    // 针对新上传的文件自动截取首帧作为封面保存
+    document.getElementById('fileInput').addEventListener('change', async e => {
       const files = Array.from(e.target.files);
       if(!files.length) return;
+      
+      showToast('正在提取视频封面并保存...');
+      
+      // 先并发提取全部封面图，然后再保存
+      const processedFiles = [];
+      for(let i = 0; i < files.length; i++) {
+          const thumb = await extractVideoFrame(files[i]);
+          processedFiles.push({ file: files[i], thumb });
+      }
+
       const tx = db.transaction('videos', 'readwrite');
       const store = tx.objectStore('videos');
-      files.forEach((f, idx) => store.put({ id: 'v_'+Date.now()+'_'+idx, folderId: currentFolderId, name: f.name, blob: f, createdAt: Date.now() + idx }));
+      
+      processedFiles.forEach((item, idx) => {
+          store.put({ 
+              id: 'v_'+Date.now()+'_'+idx, 
+              folderId: currentFolderId, 
+              name: item.file.name, 
+              blob: item.file, 
+              thumb: item.thumb, // 存储抽帧数据
+              createdAt: Date.now() + idx 
+          });
+      });
+      
       tx.oncomplete = () => { 
         e.target.value = ''; 
         loadData(); 
-        showToast('上传成功'); 
+        showToast('视频添加成功'); 
       };
     });
 
