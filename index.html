@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>iPhone 四屏本地视频播放器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050816;
+      color: #f9fafb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    .app {
+      width: 100vw;
+      height: 100dvh;
+      max-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #050816;
+    }
+
+    .topbar {
+      flex: 0 0 auto;
+      height: 48px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0b1020;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-subtitle {
+      margin-top: 2px;
+      font-size: 10px;
+      color: #9ca3af;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toolbar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    button,
+    .file-btn {
+      height: 32px;
+      border: 0;
+      border-radius: 9px;
+      padding: 0 9px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    button:active,
+    .file-btn:active {
+      transform: scale(0.97);
+      opacity: 0.86;
+    }
+
+    button.secondary {
+      background: #1f2937;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      padding: 6px;
+      overflow: hidden;
+    }
+
+    .cell {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .video-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: #000;
+      pointer-events: none;
+    }
+
+    .cell video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: #000;
+      pointer-events: none !important;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .cell.cover video {
+      object-fit: cover;
+    }
+
+    .tap-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .cell-head {
+      position: absolute;
+      z-index: 8;
+      top: 0;
+      left: 0;
+      right: 0;
+      min-height: 30px;
+      padding: 5px 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
+
+    .cell-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.94);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .cell-actions {
+      position: absolute;
+      z-index: 12;
+      right: 5px;
+      bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mini,
+    .mini-label {
+      width: 30px;
+      height: 28px;
+      padding: 0;
+      border-radius: 9px;
+      background: rgba(17, 24, 39, 0.86);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .mini-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .center-empty,
+    .center-play {
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      text-align: center;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.45;
+      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), rgba(0, 0, 0, 0.88));
+      pointer-events: none;
+    }
+
+    .center-empty strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .center-play {
+      background: transparent;
+    }
+
+    .big-play {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+    }
+
+    .center-play.hidden {
+      display: none;
+    }
+
+    .status {
+      position: absolute;
+      z-index: 9;
+      left: 6px;
+      bottom: 7px;
+      right: 146px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 99;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      max-width: 86vw;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      font-size: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+      display: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (orientation: landscape) {
+      .app {
+        flex-direction: row;
+      }
+
+      .topbar {
+        width: 86px;
+        height: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        border-bottom: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .brand {
+        flex: 0 0 auto;
+      }
+
+      .brand-title {
+        font-size: 12px;
+        white-space: normal;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+      }
+
+      button,
+      .file-btn {
+        width: 100%;
+        height: 34px;
+        padding: 0 6px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .topbar {
+        height: 44px;
+      }
+
+      .brand-title {
+        font-size: 13px;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      button,
+      .file-btn {
+        height: 30px;
+        padding: 0 7px;
+        font-size: 11px;
+      }
+
+      .grid {
+        gap: 4px;
+        padding: 4px;
+      }
+
+      .cell {
+        border-radius: 10px;
+      }
+
+      .mini,
+      .mini-label {
+        width: 28px;
+        height: 26px;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+
+      .big-play {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .status {
+        right: 136px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">四屏本地视频</div>
+        <div class="brand-subtitle">视频层禁点，全部内联播放</div>
+      </div>
+      <div class="toolbar">
+        <label class="file-btn" for="multiInput">批量</label>
+        <input id="multiInput" type="file" accept="video/*" multiple />
+        <button class="secondary" id="playAllBtn" type="button">播放</button>
+        <button class="secondary" id="pauseAllBtn" type="button">暂停</button>
+        <button class="secondary" id="clearBtn" type="button">清空</button>
+      </div>
+    </header>
+
+    <main class="grid" id="grid"></main>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const toast = document.getElementById('toast');
+    const multiInput = document.getElementById('multiInput');
+    const playAllBtn = document.getElementById('playAllBtn');
+    const pauseAllBtn = document.getElementById('pauseAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const players = [];
+    let toastTimer = null;
+
+    function preventDefaultTouch(event) {
+      if (!event.target.closest('input') && !event.target.closest('label') && !event.target.closest('button')) {
+        event.preventDefault();
+      }
+    }
+
+    document.addEventListener('gesturestart', function(event) {
+      event.preventDefault();
+    });
+
+    document.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 1600);
+    }
+
+    function shortName(name) {
+      if (!name) return '';
+      return name.length > 18 ? name.slice(0, 8) + '…' + name.slice(-7) : name;
+    }
+
+    function forceInlineVideo(video) {
+      video.controls = false;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.autoplay = false;
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('x5-playsinline', '');
+      video.setAttribute('x5-video-player-type', 'h5-page');
+      video.setAttribute('x5-video-player-fullscreen', 'false');
+      video.setAttribute('disablePictureInPicture', '');
+      video.setAttribute('controlsList', 'nofullscreen nodownload noremoteplayback');
+      video.removeAttribute('controls');
+    }
+
+    function createCell(index) {
+      const cell = document.createElement('section');
+      cell.className = 'cell';
+      cell.innerHTML = `
+        <div class="video-layer">
+          <video id="video-${index}" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" x5-video-player-fullscreen="false" preload="metadata" disablePictureInPicture controlsList="nofullscreen nodownload noremoteplayback"></video>
+        </div>
+        <div class="tap-layer" id="tap-${index}"></div>
+        <div class="cell-head">
+          <div class="cell-title" id="title-${index}">窗口 ${index + 1}</div>
+        </div>
+        <div class="center-empty" id="empty-${index}">
+          <div>
+            <strong>${index + 1}</strong>
+            点右下角 +<br />选择视频
+          </div>
+        </div>
+        <div class="center-play hidden" id="centerPlay-${index}">
+          <div class="big-play">▶</div>
+        </div>
+        <div class="status" id="status-${index}">未选择</div>
+        <div class="cell-actions">
+          <label class="mini-label" for="file-${index}" title="选择视频">+</label>
+          <input id="file-${index}" type="file" accept="video/*" />
+          <button class="mini" id="play-${index}" title="播放/暂停" type="button">▶</button>
+          <button class="mini" id="mute-${index}" title="静音" type="button">🔈</button>
+          <button class="mini" id="fit-${index}" title="填充/适应" type="button">⛶</button>
+        </div>
+      `;
+
+      grid.appendChild(cell);
+
+      const player = {
+        index,
+        cell,
+        tapLayer: cell.querySelector(`#tap-${index}`),
+        video: cell.querySelector(`#video-${index}`),
+        fileInput: cell.querySelector(`#file-${index}`),
+        title: cell.querySelector(`#title-${index}`),
+        empty: cell.querySelector(`#empty-${index}`),
+        centerPlay: cell.querySelector(`#centerPlay-${index}`),
+        status: cell.querySelector(`#status-${index}`),
+        playBtn: cell.querySelector(`#play-${index}`),
+        muteBtn: cell.querySelector(`#mute-${index}`),
+        fitBtn: cell.querySelector(`#fit-${index}`),
+        objectUrl: null,
+        file: null,
+      };
+
+      forceInlineVideo(player.video);
+
+      player.fileInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (file) loadFile(index, file);
+      });
+
+      player.playBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        togglePlay(index);
+      });
+
+      player.tapLayer.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        togglePlay(index);
+      });
+
+      player.tapLayer.addEventListener('touchend', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        togglePlay(index);
+      }, { passive: false });
+
+      player.muteBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        player.video.muted = !player.video.muted;
+        player.video.defaultMuted = player.video.muted;
+        player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
+        showToast(`窗口 ${index + 1}：${player.video.muted ? '已静音' : '已开启声音'}`);
+      });
+
+      player.fitBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        player.cell.classList.toggle('cover');
+        showToast(`窗口 ${index + 1}：${player.cell.classList.contains('cover') ? '填充画面' : '完整显示'}`);
+      });
+
+      player.video.addEventListener('webkitbeginfullscreen', () => {
+        try {
+          player.video.pause();
+          if (player.video.webkitExitFullscreen) player.video.webkitExitFullscreen();
+          showToast('已阻止全屏，请使用页面按钮播放');
+        } catch (e) {}
+      });
+
+      player.video.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === player.video && document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      });
+
+      player.video.addEventListener('play', () => {
+        player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
+        player.playBtn.textContent = '⏸';
+        player.centerPlay.classList.add('hidden');
+      });
+
+      player.video.addEventListener('pause', () => {
+        if (player.file) {
+          player.status.textContent = '已暂停';
+          player.playBtn.textContent = '▶';
+          player.centerPlay.classList.remove('hidden');
+        }
+      });
+
+      player.video.addEventListener('ended', () => {
+        player.status.textContent = '播放结束';
+        player.playBtn.textContent = '▶';
+        player.centerPlay.classList.remove('hidden');
+      });
+
+      player.video.addEventListener('error', () => {
+        player.status.textContent = '格式不支持';
+        showToast('该视频格式可能不被 iPhone Safari 支持');
+      });
+
+      players.push(player);
+    }
+
+    function loadFile(index, file) {
+      const player = players[index];
+      if (!player) return;
+
+      if (player.objectUrl) {
+        URL.revokeObjectURL(player.objectUrl);
+      }
+
+      forceInlineVideo(player.video);
+
+      const url = URL.createObjectURL(file);
+      player.objectUrl = url;
+      player.file = file;
+      player.video.src = url;
+      player.video.load();
+      player.title.textContent = shortName(file.name);
+      player.status.textContent = '已载入 · 默认静音';
+      player.empty.style.display = 'none';
+      player.centerPlay.classList.remove('hidden');
+      player.playBtn.textContent = '▶';
+      player.muteBtn.textContent = '🔈';
+      showToast(`窗口 ${index + 1} 已载入视频`);
+    }
+
+    function togglePlay(index) {
+      const player = players[index];
+      if (!player || !player.file) {
+        showToast(`请先给窗口 ${index + 1} 选择视频`);
+        return;
+      }
+
+      forceInlineVideo(player.video);
+
+      if (player.video.paused || player.video.ended) {
+        const playPromise = player.video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            player.status.textContent = '需再次点击播放';
+            showToast('iPhone 阻止播放，请再点一次当前窗口的 ▶');
+          });
+        }
+      } else {
+        player.video.pause();
+      }
+    }
+
+    function playAll() {
+      let count = 0;
+      players.forEach((player) => {
+        if (player.file) {
+          count++;
+          forceInlineVideo(player.video);
+          const playPromise = player.video.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {
+              player.status.textContent = '需手动播放';
+              player.playBtn.textContent = '▶';
+              player.centerPlay.classList.remove('hidden');
+            });
+          }
+        }
+      });
+      showToast(count ? '已尝试播放四个窗口，默认静音内联' : '请先选择视频');
+    }
+
+    function pauseAll() {
+      players.forEach((player) => {
+        if (player.file) player.video.pause();
+      });
+      showToast('已暂停全部视频');
+    }
+
+    function clearAll() {
+      players.forEach((player) => {
+        player.video.pause();
+        if (player.objectUrl) URL.revokeObjectURL(player.objectUrl);
+        player.objectUrl = null;
+        player.file = null;
+        player.video.removeAttribute('src');
+        player.video.load();
+        forceInlineVideo(player.video);
+        player.title.textContent = `窗口 ${player.index + 1}`;
+        player.status.textContent = '未选择';
+        player.empty.style.display = 'flex';
+        player.centerPlay.classList.add('hidden');
+        player.playBtn.textContent = '▶';
+        player.muteBtn.textContent = '🔈';
+        player.fileInput.value = '';
+      });
+      multiInput.value = '';
+      showToast('已清空');
+    }
+
+    multiInput.addEventListener('change', (event) => {
+      const files = Array.from(event.target.files || []).slice(0, 4);
+      if (!files.length) return;
+      files.forEach((file, index) => loadFile(index, file));
+    });
+
+    playAllBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      playAll();
+    });
+
+    pauseAllBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      pauseAll();
+    });
+
+    clearBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      clearAll();
+    });
+
+    for (let i = 0; i < 4; i++) {
+      createCell(i);
+    }
+  </script>
+</body>
+</html>
