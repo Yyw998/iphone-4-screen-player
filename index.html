@@ -44,11 +44,12 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; touch-action: manipulation; overscroll-behavior: none; }
-    
-    /* 背景跟随系统白天/黑夜动态切换 */
     body { padding-top: env(safe-area-inset-top); background: var(--app-bg); color: var(--app-text); transition: background 0.3s, color 0.3s; }
     button { border: 0; cursor: pointer; background: transparent; font-family: inherit; user-select: none; }
     input[type="file"] { display: none; }
+
+    /* 全局 SVG 图标样式 */
+    svg { width: 1em; height: 1em; display: inline-block; vertical-align: middle; }
 
     .app { width: 100vw; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
     .page { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
@@ -59,15 +60,13 @@
     .player-shell { flex: 1; position: relative; padding: 8px; overflow: hidden; display: flex; flex-direction: column; }
     .player-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; min-height: 0; }
     
-    /* 视频容器始终保持深色包裹 */
     .screen-card { position: relative; border-radius: 12px; background: #1e293b; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
-    
     .video-container { position: absolute; inset: 0; background: #000; overflow: hidden; }
-    .video-container video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+    .video-container video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; transition: transform 0.3s ease; }
     
     .screen-label { position: absolute; left: 10px; top: 10px; z-index: 10; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
     .screen-placeholder { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #1e293b, #0f172a); pointer-events: none; }
-    .placeholder-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; margin-bottom: 8px; }
+    .placeholder-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #94a3b8; margin-bottom: 8px; font-size: 20px; }
     .placeholder-text { font-size: 12px; color: #64748b; }
     
     .tap-layer { position: absolute; inset: 0; z-index: 15; cursor: pointer; }
@@ -80,23 +79,24 @@
     .qm-progress-bar { flex: 1; height: 3px; accent-color: #3b82f6; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; -webkit-appearance: none; }
     .qm-progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
     .qm-center { display: flex; justify-content: center; align-items: center; gap: 24px; }
-    .qm-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-    .qm-btn.play { width: 34px; height: 34px; font-size: 16px; background: rgba(255,255,255,0.15); }
+    .qm-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .qm-btn.play { width: 34px; height: 34px; background: rgba(255,255,255,0.15); font-size: 20px; }
     .qm-footer { display: flex; justify-content: space-between; align-items: center; }
     .qm-util { background: rgba(255,255,255,0.05); padding: 4px 6px; border-radius: 6px; font-size: 10px; color: #cbd5e1; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+    .qm-util svg { font-size: 14px; margin-right: 4px; }
 
     /* ================= 锁屏 ================= */
     .app.is-locked .global-toolbar { opacity: 0 !important; pointer-events: none !important; }
     .lock-mask { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
     .lock-mask.show { display: flex; }
-    .unlock-btn { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .unlock-btn { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.5); font-size: 32px; }
     .unlock-hint { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
     /* ================= 全局悬浮工具栏 ================= */
     .global-toolbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 88%; max-width: 360px; height: 68px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; display: grid; grid-template-columns: repeat(4, 1fr); z-index: 40; opacity: 0.15; transition: opacity 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
     .global-toolbar.is-awake { opacity: 1; }
     .tb-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); gap: 4px; }
-    .tb-icon { width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .tb-icon { width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .tb-text { font-size: 10px; font-weight: 500; }
 
     /* ================= 底部导航 ================= */
@@ -109,9 +109,9 @@
     .app.tab-collapsed .tabbar { height: 0; padding-bottom: 0; border-top: none; }
     .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; font-size: 11px; gap: 4px; font-weight: 600; }
     .tab.active { color: #fff; }
-    .tab-icon { font-size: 20px; }
+    .tab-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
 
-    /* ================= 选片弹窗 (支持日夜背景与视频库同款配色) ================= */
+    /* ================= 选片弹窗 ================= */
     .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
     .quick-sheet-overlay.show { display: flex; }
     .quick-sheet { width: 100%; background: var(--card-bg); color: var(--app-text); border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -121,10 +121,10 @@
     .qs-close { font-size: 20px; color: var(--muted-text); }
     .qs-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .qs-item { flex: 0 0 120px; overflow: hidden; }
-    .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+    .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 28px; }
     .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--app-text); text-align: center; display: block; }
 
-    /* ================= 视频库 (深度适配日夜模式的精美UI) ================= */
+    /* ================= 视频库 ================= */
     .library-page { color: var(--app-text); height: 100%; }
     .lib-header-wrap { flex: 0 0 auto; padding: 14px 16px 8px; background: var(--header-bg); border-bottom: 1px solid var(--header-border); text-align: center; font-size: 20px; font-weight: 800; color: var(--app-text); transition: all 0.3s; }
     .lib-content { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 12px; -webkit-overflow-scrolling: touch; }
@@ -134,26 +134,27 @@
     .folder-strip::-webkit-scrollbar { display: none; }
     .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text); transition: all 0.3s; }
     .folder-card.active { border: 2px solid var(--blue); background: var(--folder-active-bg); }
-    .folder-icon { font-size: 31px; margin-bottom: 7px; }
+    .folder-icon { font-size: 32px; margin-bottom: 7px; color: var(--blue); }
+    .folder-card.active .folder-icon { color: var(--blue2); }
     .folder-name { font-size: 12px; font-weight: 800; max-width: 88px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--app-text); }
     .folder-count { margin-top: 3px; font-size: 10px; color: var(--muted-text); }
     
     .library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0 18px; }
-    .primary-action { background: var(--blue); color: #fff; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23); }
-    .secondary-action { background: var(--card-bg); color: var(--blue2); border: 1px solid var(--card-border); border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; transition: all 0.3s; }
+    .primary-action { background: var(--blue); color: #fff; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; gap: 6px; box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23); }
+    .secondary-action { background: var(--card-bg); color: var(--blue2); border: 1px solid var(--card-border); border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; gap: 6px; transition: all 0.3s; }
     
     .video-list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
     .folder-current { font-size: 15px; font-weight: 800; color: var(--app-text); }
-    .sort-text { font-size: 12px; color: var(--muted-text); }
+    .sort-text { font-size: 12px; color: var(--muted-text); display: flex; align-items: center; gap: 4px; }
     
     .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
     .video-item { min-height: 78px; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; transition: all 0.3s; }
-    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 22px; }
+    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; }
     .video-main { min-width: 0; }
     .video-name { font-size: 14px; font-weight: 800; color: var(--app-text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
     .video-meta { font-size: 12px; color: var(--muted-text); margin-bottom: 7px; }
     .video-actions { display: flex; justify-content: flex-end; }
-    .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; }
+    .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; display: flex; align-items: center; gap: 4px; }
 
     .toast { position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; }
   </style>
@@ -164,10 +165,10 @@
     <section id="playPage" class="page play-page active">
       <main class="player-shell">
         <div class="global-toolbar is-idle" id="globalToolbar">
-          <button class="tb-btn" id="tbPlayAll"><div class="tb-icon" id="iconPlayAll">▶</div><div class="tb-text">全部播放</div></button>
-          <button class="tb-btn" id="tbMuteAll"><div class="tb-icon" id="iconMuteAll">🔇</div><div class="tb-text">全部静音</div></button>
-          <button class="tb-btn" id="tbLock"><div class="tb-icon" id="iconLock">🔓</div><div class="tb-text">锁定</div></button>
-          <button class="tb-btn" id="tbClear"><div class="tb-icon">🗑</div><div class="tb-text">清空</div></button>
+          <button class="tb-btn" id="tbPlayAll"><div class="tb-icon" id="iconPlayAll"></div><div class="tb-text">全部播放</div></button>
+          <button class="tb-btn" id="tbMuteAll"><div class="tb-icon" id="iconMuteAll"></div><div class="tb-text">全部静音</div></button>
+          <button class="tb-btn" id="tbLock"><div class="tb-icon" id="iconLock"></div><div class="tb-text">锁定</div></button>
+          <button class="tb-btn" id="tbClear"><div class="tb-icon" id="iconClear"></div><div class="tb-text">清空</div></button>
         </div>
         <div class="player-grid" id="playerGrid"></div>
       </main>
@@ -180,14 +181,21 @@
         <div class="folder-strip" id="folderStrip"></div>
         
         <div class="library-actions">
-          <button class="primary-action" id="btnNewFolder">📁 新建文件夹</button>
-          <label class="secondary-action" for="fileInput">＋ 添加视频</label>
+          <button class="primary-action" id="btnNewFolder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg> 新建文件夹
+          </button>
+          <label class="secondary-action" for="fileInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 添加视频
+          </label>
           <input id="fileInput" type="file" accept="video/*" multiple />
         </div>
         
         <div class="video-list-head">
           <div class="folder-current" id="libVideoTitle">全部视频 · 0 个视频</div>
-          <div class="sort-text">按名称⌄ ▦</div>
+          <div class="sort-text">
+            按名称 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </div>
         </div>
         
         <div class="video-list" id="libVideoList"></div>
@@ -199,13 +207,21 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <nav class="tabbar" id="tabbar">
-        <button class="tab active" id="tabPlay"><div class="tab-icon">▶</div><div>播放</div></button>
-        <button class="tab" id="tabLib"><div class="tab-icon">📁</div><div>视频库</div></button>
+        <button class="tab active" id="tabPlay">
+          <div class="tab-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+          <div>播放</div>
+        </button>
+        <button class="tab" id="tabLib">
+          <div class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+          <div>视频库</div>
+        </button>
       </nav>
     </div>
 
     <div class="lock-mask" id="lockMask">
-      <button class="unlock-btn" id="btnUnlock">🔒</button>
+      <button class="unlock-btn" id="btnUnlock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      </button>
       <div class="unlock-hint">点击图标解锁</div>
     </div>
 
@@ -213,10 +229,11 @@
       <div class="quick-sheet">
         <div class="qs-header">
           <div class="qs-title">选择视频替换 - <span id="qsTargetScreen">屏幕 1</span></div>
-          <button class="qs-close" id="qsClose">✕</button>
+          <button class="qs-close" id="qsClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         <div class="folder-strip" id="qsFolderStrip" style="margin-bottom: 12px; padding-bottom: 8px;"></div>
-        
         <div class="qs-list" id="qsVideoList"></div>
       </div>
     </div>
@@ -225,13 +242,32 @@
   </div>
 
   <script>
-    const DB_NAME = 'video_lib_v13';
+    const DB_NAME = 'video_lib_v14';
     let db = null, folders = [], currentFolderId = 'default', currentVideos = [];
     let isLocked = false, globalMuted = true;
     let pendingScreenIndex = null;
-    let qsFolderId = 'default'; // 选片弹窗独立文件夹追踪
+    let qsFolderId = 'default';
     let toastTimer, toolbarTimer;
     const players = [];
+
+    // --- 一致性风格的 SVG 图标库 ---
+    const ICONS = {
+      play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+      pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+      mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
+      unmute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+      lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+      unlock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>',
+      trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
+      rewind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>',
+      forward: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>',
+      switch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>',
+      rotate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>',
+      plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+      folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+      film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>',
+      speed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+    };
 
     const UI = {
       app: document.getElementById('app'),
@@ -264,6 +300,9 @@
       const m = Math.floor(s/60), sec = Math.floor(s%60);
       return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     }
+
+    // 初始化全局图标
+    document.getElementById('iconClear').innerHTML = ICONS.trash;
 
     // --- DB操作 ---
     async function initDB() {
@@ -305,7 +344,7 @@
             <video playsinline webkit-playsinline disablePictureInPicture></video>
             <div class="screen-label">屏幕 ${i+1}</div>
             <div class="screen-placeholder">
-              <div class="placeholder-icon">＋</div>
+              <div class="placeholder-icon">${ICONS.plus}</div>
               <div class="placeholder-text">点击添加视频</div>
             </div>
             <div class="tap-layer"></div>
@@ -318,14 +357,14 @@
               <span class="time-dur">00:00</span>
             </div>
             <div class="qm-center">
-              <button class="qm-btn btn-rw">⏪</button>
-              <button class="qm-btn play btn-play">▶</button>
-              <button class="qm-btn btn-ff">⏩</button>
+              <button class="qm-btn btn-rw">${ICONS.rewind}</button>
+              <button class="qm-btn play btn-play">${ICONS.play}</button>
+              <button class="qm-btn btn-ff">${ICONS.forward}</button>
             </div>
             <div class="qm-footer">
-              <button class="qm-util btn-switch">🔁 切换</button>
-              <button class="qm-util btn-speed">1.0x</button>
-              <button class="qm-util btn-fit">⛶ 适配</button>
+              <button class="qm-util btn-switch">${ICONS.switch} 切换</button>
+              <button class="qm-util btn-speed">${ICONS.speed} <span>1.0x</span></button>
+              <button class="qm-util btn-fit">${ICONS.rotate} <span>横屏</span></button>
             </div>
           </div>
         `;
@@ -346,7 +385,7 @@
           progBar: div.querySelector('.prog-bar'),
           timeCur: div.querySelector('.time-cur'),
           timeDur: div.querySelector('.time-dur'),
-          speedVal: 1.0, isCover: false, hideTimer: null,
+          speedVal: 1.0, isRotated: false, hideTimer: null,
           file: null, url: null
         };
         players.push(player);
@@ -360,13 +399,11 @@
           }, 5000);
         };
 
-        // 优化点1：点击单屏非控制面板区域（tapLayer），实现显示或隐藏控制台的逻辑
         player.tapLayer.addEventListener('click', () => {
           if(isLocked) return;
           if(!player.file) {
             openQuickPicker(i);
           } else {
-            // 已有视频时，如果控制台处于激活态，点击画面非面板处则移除 active 隐藏之
             if (player.controls.classList.contains('active')) {
                 player.controls.classList.remove('active');
                 clearTimeout(player.hideTimer);
@@ -383,7 +420,7 @@
 
         player.btnPlay.addEventListener('click', () => {
           if(player.video.paused) player.video.play(); else player.video.pause();
-          player.btnPlay.textContent = player.video.paused ? '▶' : '⏸';
+          player.btnPlay.innerHTML = player.video.paused ? ICONS.play : ICONS.pause;
           updateGlobalIcons();
         });
 
@@ -391,17 +428,19 @@
         player.btnFf.addEventListener('click', () => player.video.currentTime = Math.min(player.video.duration, player.video.currentTime + 10));
         player.btnSwitch.addEventListener('click', () => openQuickPicker(i));
         
+        // --- 核心修改：横竖屏切换逻辑 ---
         player.btnFit.addEventListener('click', () => {
-          player.isCover = !player.isCover;
-          player.video.style.objectFit = player.isCover ? 'cover' : 'contain';
-          player.btnFit.innerHTML = player.isCover ? '🗖 填充' : '⛶ 适配';
+          player.isRotated = !player.isRotated;
+          // 直接利用 CSS transform 实现 90度旋转，无损应对错向视频
+          player.video.style.transform = player.isRotated ? 'rotate(-90deg)' : 'none';
+          player.btnFit.innerHTML = player.isRotated ? `${ICONS.rotate} <span>竖屏</span>` : `${ICONS.rotate} <span>横屏</span>`;
         });
 
         player.btnSpeed.addEventListener('click', () => {
           const speeds = [1.0, 1.25, 1.5, 2.0];
           player.speedVal = speeds[(speeds.indexOf(player.speedVal) + 1) % speeds.length];
           player.video.playbackRate = player.speedVal;
-          player.btnSpeed.innerHTML = `${player.speedVal}x`;
+          player.btnSpeed.innerHTML = `${ICONS.speed} <span>${player.speedVal}x</span>`;
         });
 
         player.video.addEventListener('timeupdate', () => {
@@ -445,7 +484,7 @@
       }
     }, true);
 
-    // --- 全局工具栏唤醒逻辑 ---
+    // --- 全局工具栏唤醒 ---
     UI.globalToolbar.addEventListener('click', (e) => {
       if(isLocked) return;
       if (!UI.globalToolbar.classList.contains('is-awake')) {
@@ -462,11 +501,13 @@
 
     function updateGlobalIcons() {
       const anyPlaying = players.some(p => p.file && !p.video.paused);
-      document.getElementById('iconPlayAll').textContent = anyPlaying ? '⏸' : '▶';
+      document.getElementById('iconPlayAll').innerHTML = anyPlaying ? ICONS.pause : ICONS.play;
       document.getElementById('tbPlayAll').querySelector('.tb-text').textContent = anyPlaying ? '全部暂停' : '全部播放';
-      document.getElementById('iconMuteAll').textContent = globalMuted ? '🔇' : '🔊';
-      document.getElementById('tbMuteAll').querySelector('.tb-text').textContent = globalMuted ? '全部开声' : '全部静音';
-      document.getElementById('iconLock').textContent = isLocked ? '🔒' : '🔓';
+      
+      document.getElementById('iconMuteAll').innerHTML = globalMuted ? ICONS.mute : ICONS.unmute;
+      document.getElementById('tbMuteAll').querySelector('.tb-text').textContent = globalMuted ? '全部静音' : '全部开声';
+      
+      document.getElementById('iconLock').innerHTML = isLocked ? ICONS.lock : ICONS.unlock;
     }
 
     document.getElementById('tbPlayAll').addEventListener('click', () => {
@@ -474,7 +515,7 @@
       players.forEach(p => {
         if(p.file) {
           if(anyPlaying) p.video.pause(); else { p.video.muted = globalMuted; p.video.play(); }
-          p.btnPlay.textContent = p.video.paused ? '▶' : '⏸';
+          p.btnPlay.innerHTML = p.video.paused ? ICONS.play : ICONS.pause;
         }
       });
       updateGlobalIcons();
@@ -491,6 +532,8 @@
         p.video.pause(); p.file = null;
         if(p.url) URL.revokeObjectURL(p.url);
         p.video.removeAttribute('src'); p.video.load();
+        p.video.style.transform = 'none'; p.isRotated = false;
+        p.btnFit.innerHTML = `${ICONS.rotate} <span>横屏</span>`;
         p.placeholder.style.display = 'flex';
         p.controls.classList.remove('active');
       });
@@ -517,11 +560,11 @@
       loadData();
     });
 
-    // --- 优化点2：支持文件夹切换的快速选片 ---
+    // --- 快速选片 ---
     function openQuickPicker(index) {
       pendingScreenIndex = index;
       UI.qsTargetScreen.textContent = `屏幕 ${index + 1}`;
-      qsFolderId = currentFolderId; // 跟随用户在视频库的当前文件夹
+      qsFolderId = currentFolderId; 
       UI.qsOverlay.classList.add('show');
       renderQuickPickerList();
     }
@@ -529,22 +572,19 @@
     UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
 
     async function renderQuickPickerList() {
-      // 提取全部视频用于渲染文件夹计数器
       const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
       const counts = {};
       allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
 
-      // 渲染文件夹卡片，UI 与主视频库高度一致
       UI.qsFolderStrip.innerHTML = '';
       folders.forEach(f => {
         const el = document.createElement('div');
         el.className = `folder-card ${f.id === qsFolderId ? 'active' : ''}`;
-        el.innerHTML = `<div class="folder-icon">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+        el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
         el.addEventListener('click', () => { qsFolderId = f.id; renderQuickPickerList(); });
         UI.qsFolderStrip.appendChild(el);
       });
 
-      // 仅提取所选文件夹内的视频渲染列表
       const tx = db.transaction('videos').objectStore('videos').index('folderId');
       let videos = await new Promise(r => { const req = tx.getAll(qsFolderId); req.onsuccess=()=>r(req.result); });
       videos.sort((a,b)=>b.createdAt - a.createdAt);
@@ -554,7 +594,7 @@
       videos.forEach(v => {
         const item = document.createElement('div');
         item.className = 'qs-item';
-        item.innerHTML = `<div class="qs-thumb"><span style="font-size:24px;">🎬</span></div><div class="qs-name">${v.name}</div>`;
+        item.innerHTML = `<div class="qs-thumb">${ICONS.film}</div><div class="qs-name">${v.name}</div>`;
         item.addEventListener('click', () => {
           const p = players[pendingScreenIndex];
           p.file = v.blob;
@@ -568,7 +608,7 @@
           p.controls.classList.add('active'); 
           clearTimeout(p.hideTimer);
           p.hideTimer = setTimeout(()=> p.controls.classList.remove('active'), 5000);
-          p.btnPlay.textContent = '⏸';
+          p.btnPlay.innerHTML = ICONS.pause;
           
           UI.qsOverlay.classList.remove('show');
           updateGlobalIcons();
@@ -587,7 +627,7 @@
       folders.forEach(f => {
         const el = document.createElement('div');
         el.className = `folder-card ${f.id === currentFolderId ? 'active' : ''}`;
-        el.innerHTML = `<div class="folder-icon">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+        el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
         el.addEventListener('click', () => { currentFolderId = f.id; loadData(); });
         UI.folderStrip.appendChild(el);
       });
@@ -600,12 +640,12 @@
         const el = document.createElement('div');
         el.className = 'video-item';
         el.innerHTML = `
-          <div class="thumb">🎬</div>
+          <div class="thumb">${ICONS.film}</div>
           <div class="video-main">
             <div class="video-name">${v.name}</div>
             <div class="video-meta">${(v.blob.size / 1024 / 1024).toFixed(1)} MB · ${new Date(v.createdAt).toLocaleDateString()}</div>
             <div class="video-actions">
-              <button class="delete-btn">🗑 删除</button>
+              <button class="delete-btn">${ICONS.trash} 删除</button>
             </div>
           </div>
         `;
@@ -639,7 +679,7 @@
       };
     });
 
-    initDB().then(() => { initPlayers(); loadData(); });
+    initDB().then(() => { initPlayers(); loadData(); updateGlobalIcons(); });
   </script>
 </body>
 </html>
