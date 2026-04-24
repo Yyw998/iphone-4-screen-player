@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>四屏播放器</title>
+  <title>四屏本地视频</title>
 
   <style>
     :root {
@@ -120,8 +120,8 @@
     .qs-title { font-size: 15px; font-weight: 600; color: var(--app-text); }
     .qs-close { font-size: 20px; color: var(--muted-text); }
     .qs-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-    .qs-item { flex: 0 0 120px; overflow: hidden; }
-    .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 28px; }
+    .qs-item { flex: 0 0 120px; overflow: hidden; cursor: pointer; }
+    .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 28px; overflow: hidden; }
     .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--app-text); text-align: center; display: block; }
 
     /* ================= 视频库 ================= */
@@ -132,7 +132,7 @@
     
     .folder-strip { display: flex; gap: 10px; overflow-x: auto; padding: 1px 2px 12px; scrollbar-width: none; }
     .folder-strip::-webkit-scrollbar { display: none; }
-    .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text); transition: all 0.3s; }
+    .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text); transition: all 0.3s; cursor: pointer; }
     .folder-card.active { border: 2px solid var(--blue); background: var(--folder-active-bg); }
     .folder-icon { font-size: 32px; margin-bottom: 7px; color: var(--blue); }
     .folder-card.active .folder-icon { color: var(--blue2); }
@@ -141,7 +141,7 @@
     
     .library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0 18px; }
     .primary-action { background: var(--blue); color: #fff; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; gap: 6px; box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23); }
-    .secondary-action { background: var(--card-bg); color: var(--blue2); border: 1px solid var(--card-border); border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; gap: 6px; transition: all 0.3s; }
+    .secondary-action { background: var(--card-bg); color: var(--blue2); border: 1px solid var(--card-border); border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; gap: 6px; transition: all 0.3s; cursor: pointer; }
     
     .video-list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
     .folder-current { font-size: 15px; font-weight: 800; color: var(--app-text); }
@@ -149,7 +149,9 @@
     
     .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
     .video-item { min-height: 78px; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; transition: all 0.3s; }
-    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; }
+    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-duration { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,0.7); font-size: 10px; padding: 2px 4px; border-radius: 4px; color: #fff; z-index: 5;}
     .video-main { min-width: 0; }
     .video-name { font-size: 14px; font-weight: 800; color: var(--app-text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
     .video-meta { font-size: 12px; color: var(--muted-text); margin-bottom: 7px; }
@@ -157,6 +159,10 @@
     .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; display: flex; align-items: center; gap: 4px; }
 
     .toast { position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; }
+    
+    /* 加载更多指示器 */
+    .loading-more { text-align: center; padding: 15px; font-size: 12px; color: var(--muted-text); display: none; }
+    .loading-more.show { display: block; }
   </style>
 </head>
 
@@ -176,7 +182,7 @@
 
     <section id="libraryPage" class="page library-page">
       <header class="lib-header-wrap">视频库</header>
-      <main class="lib-content">
+      <main class="lib-content" id="libContentScroll">
         <div class="section-title">文件夹</div>
         <div class="folder-strip" id="folderStrip"></div>
         
@@ -199,6 +205,7 @@
         </div>
         
         <div class="video-list" id="libVideoList"></div>
+        <div class="loading-more" id="loadingMore">正在加载更多...</div>
       </main>
     </section>
 
@@ -242,15 +249,25 @@
   </div>
 
   <script>
-    const DB_NAME = 'video_lib_v16'; // 升级DB，彻底清理无法展示封面的旧数据
-    let db = null, folders = [], currentFolderId = 'default', currentVideos = [];
-    let isLocked = false, globalMuted = true;
+    // =======================
+    // 核心架构：分离数据库
+    // =======================
+    const DB_NAME = 'video_lib_v17'; // 全新架构数据库，彻底抛弃旧版单表存储
+    let db = null;
+    
+    // 状态管理
+    let folders = [];
+    let currentFolderId = 'default';
+    let isLocked = false;
+    let globalMuted = true;
     let pendingScreenIndex = null;
     let qsFolderId = 'default';
     let toastTimer, toolbarTimer;
     const players = [];
 
-    // --- 一致性风格的 SVG 图标库 ---
+    // =======================
+    // 一致性风格的 SVG 图标库
+    // =======================
     const ICONS = {
       play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
       pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
@@ -288,7 +305,9 @@
       libVideoList: document.getElementById('libVideoList'),
       libVideoTitle: document.getElementById('libVideoTitle'),
       lockMask: document.getElementById('lockMask'),
-      btnUnlock: document.getElementById('btnUnlock')
+      btnUnlock: document.getElementById('btnUnlock'),
+      libContentScroll: document.getElementById('libContentScroll'),
+      loadingMore: document.getElementById('loadingMore')
     };
 
     function showToast(msg) {
@@ -300,99 +319,421 @@
       const m = Math.floor(s/60), sec = Math.floor(s%60);
       return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     }
-
-    // --- 【纯前端视频截帧算法】 高鲁棒性处理各浏览器兼容 ---
-    function extractVideoFrame(file) {
-      return new Promise((resolve) => {
-        const video = document.createElement('video');
-        video.style.display = 'none';
-        video.muted = true;
-        video.playsInline = true;
-        video.autoplay = true; 
-        
-        // 隐式加入DOM，解决 Safari 懒加载机制导致不渲染的Bug
-        document.body.appendChild(video);
-
-        const url = URL.createObjectURL(file);
-        video.src = url;
-
-        let isResolved = false;
-
-        const cleanup = (result) => {
-          if(isResolved) return;
-          isResolved = true;
-          clearTimeout(timeout);
-          if (video.parentNode) document.body.removeChild(video);
-          URL.revokeObjectURL(url);
-          resolve(result);
-        };
-
-        // 超时保底处理
-        const timeout = setTimeout(() => cleanup(null), 4000);
-
-        video.addEventListener('loadeddata', () => {
-          try {
-            // 默认截取第1秒以避开黑屏；太短则取0.1秒
-            video.currentTime = (video.duration && video.duration > 1) ? 1 : 0.1;
-          } catch(e) {
-            cleanup(null);
-          }
-        });
-
-        video.addEventListener('seeked', () => {
-          try {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 320; // 限制尺寸以节约DB空间
-            const scale = Math.min(MAX_WIDTH / video.videoWidth, 1);
-            canvas.width = video.videoWidth * scale;
-            canvas.height = video.videoHeight * scale;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // 压缩出图
-            cleanup(canvas.toDataURL('image/jpeg', 0.6));
-          } catch(e) {
-            cleanup(null);
-          }
-        });
-
-        video.addEventListener('error', () => cleanup(null));
-      });
+    function formatSize(bytes) {
+      if (!bytes) return '-';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+    function escapeHtml(str) {
+        return str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[tag]));
     }
 
     document.getElementById('iconClear').innerHTML = ICONS.trash;
 
-    // --- DB操作 ---
+    // =======================
+    // 底层数据库工具 (拆分架构)
+    // =======================
+    function getStore(storeName, mode = 'readonly') {
+      return db.transaction([storeName], mode).objectStore(storeName);
+    }
+    function getRecord(storeName, id) {
+      return new Promise((resolve, reject) => {
+        const req = getStore(storeName).get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    function putRecord(storeName, value) {
+      return new Promise((resolve, reject) => {
+        const req = getStore(storeName, 'readwrite').put(value);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    function txDone(tx) {
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    }
+    function idbRequest(request) {
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
     async function initDB() {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = e => {
-          const d = e.target.result;
-          if(!d.objectStoreNames.contains('folders')) d.createObjectStore('folders', {keyPath:'id'});
-          if(!d.objectStoreNames.contains('videos')) {
-            const s = d.createObjectStore('videos', {keyPath:'id'});
-            s.createIndex('folderId', 'folderId', {unique:false});
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('folders')) {
+            database.createObjectStore('folders', { keyPath: 'id' });
+          }
+          if (!database.objectStoreNames.contains('video_meta')) {
+            const metaStore = database.createObjectStore('video_meta', { keyPath: 'id' });
+            metaStore.createIndex('folderId', 'folderId', { unique: false });
+            metaStore.createIndex('createdAt', 'createdAt', { unique: false });
+            metaStore.createIndex('folderId_createdAt', ['folderId', 'createdAt'], { unique: false });
+          }
+          if (!database.objectStoreNames.contains('video_blob')) {
+            database.createObjectStore('video_blob', { keyPath: 'id' });
+          }
+          if (!database.objectStoreNames.contains('video_thumb')) {
+            database.createObjectStore('video_thumb', { keyPath: 'id' });
           }
         };
         req.onsuccess = async () => {
           db = req.result;
-          const tx = db.transaction('folders', 'readwrite').objectStore('folders');
-          const d = await new Promise(r => { const rq=tx.get('default'); rq.onsuccess=()=>r(rq.result); });
-          if(!d) tx.put({id:'default', name:'默认文件夹', createdAt:Date.now()});
+          const defaultFolder = await getRecord('folders', 'default');
+          if(!defaultFolder) await putRecord('folders', {id:'default', name:'默认文件夹', createdAt:Date.now()});
           resolve();
         };
+        req.onerror = () => reject(req.error);
       });
     }
-    
-    async function loadData() {
-      folders = await new Promise(r => { const req = db.transaction('folders').objectStore('folders').getAll(); req.onsuccess=()=>r(req.result); });
-      const tx = db.transaction('videos').objectStore('videos').index('folderId');
-      currentVideos = await new Promise(r => { const req = tx.getAll(currentFolderId); req.onsuccess=()=>r(req.result); });
-      currentVideos.sort((a,b)=>b.createdAt - a.createdAt);
-      renderLibrary();
+
+    // =======================
+    // 存储空间检测
+    // =======================
+    async function checkStorageBeforeImport(files) {
+        if (!navigator.storage || !navigator.storage.estimate) return;
+        const estimate = await navigator.storage.estimate();
+        const usage = estimate.usage || 0;
+        const quota = estimate.quota || 0;
+        const importSize = Array.from(files).reduce((sum, file) => sum + file.size, 0);
+        if (quota && usage + importSize > quota * 0.9) {
+            const ok = confirm('当前浏览器存储空间可能不足，本次导入可能失败。是否继续？');
+            if (!ok) throw new Error('用户取消导入');
+        }
     }
 
-    // --- 播放器初始化 ---
+    // =======================
+    // 封面单线程生成队列
+    // =======================
+    function canvasToBlob(canvas, mime = 'image/jpeg', quality = 0.65) {
+      return new Promise(resolve => canvas.toBlob(resolve, mime, quality));
+    }
+
+    async function generateThumbnail(fileBlob) {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.style.display = 'none';
+            video.muted = true;
+            video.playsInline = true;
+            video.autoplay = true; 
+            document.body.appendChild(video); // 隐式挂载解决iOS Safari懒渲染问题
+
+            const url = URL.createObjectURL(fileBlob);
+            video.src = url;
+
+            let isResolved = false;
+            const cleanup = (result) => {
+                if(isResolved) return;
+                isResolved = true;
+                clearTimeout(timeout);
+                if (video.parentNode) document.body.removeChild(video);
+                URL.revokeObjectURL(url);
+                resolve(result);
+            };
+
+            const timeout = setTimeout(() => cleanup(null), 4000);
+
+            video.addEventListener('loadeddata', () => {
+                try { video.currentTime = (video.duration && video.duration > 2) ? 1 : Math.max(0, (video.duration || 0) * 0.1); } 
+                catch(e) { cleanup(null); }
+            });
+
+            video.addEventListener('seeked', async () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 240;
+                    const scale = Math.min(MAX_WIDTH / (video.videoWidth || MAX_WIDTH), 1);
+                    canvas.width = (video.videoWidth || 240) * scale;
+                    canvas.height = (video.videoHeight || 135) * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const blob = await canvasToBlob(canvas, 'image/jpeg', 0.65);
+                    cleanup({
+                        blob, width: canvas.width, height: canvas.height, mime: 'image/jpeg',
+                        duration: video.duration || 0, widthRaw: video.videoWidth || 0, heightRaw: video.videoHeight || 0
+                    });
+                } catch(e) { cleanup(null); }
+            });
+            video.addEventListener('error', () => cleanup(null));
+        });
+    }
+
+    const thumbQueue = { running: false, pendingIds: [] };
+
+    function enqueueThumb(videoId) {
+        if (!thumbQueue.pendingIds.includes(videoId)) thumbQueue.pendingIds.push(videoId);
+        processThumbQueue();
+    }
+
+    async function processThumbQueue() {
+        if (thumbQueue.running) return;
+        thumbQueue.running = true;
+
+        while (thumbQueue.pendingIds.length > 0) {
+            const videoId = thumbQueue.pendingIds.shift();
+            try {
+                let meta = await getRecord('video_meta', videoId);
+                if (!meta || meta.hasThumb) continue;
+
+                meta.thumbStatus = 'processing';
+                await putRecord('video_meta', meta);
+
+                const blobRecord = await getRecord('video_blob', meta.blobId);
+                if (!blobRecord || !blobRecord.blob) {
+                    meta.thumbStatus = 'failed';
+                    await putRecord('video_meta', meta);
+                    continue;
+                }
+
+                const thumbData = await generateThumbnail(blobRecord.blob);
+                
+                if (thumbData && thumbData.blob) {
+                    await putRecord('video_thumb', {
+                        id: meta.thumbId, blob: thumbData.blob, width: thumbData.width, 
+                        height: thumbData.height, mime: thumbData.mime, createdAt: Date.now()
+                    });
+                    meta.hasThumb = true;
+                    meta.thumbStatus = 'done';
+                    meta.duration = thumbData.duration;
+                    meta.width = thumbData.widthRaw;
+                    meta.height = thumbData.heightRaw;
+                } else {
+                    meta.thumbStatus = 'failed';
+                }
+                meta.updatedAt = Date.now();
+                await putRecord('video_meta', meta);
+
+                // 生成完毕，更新视窗内的封面
+                const thumbEls = document.querySelectorAll(`.thumb[data-video-id="${videoId}"]`);
+                thumbEls.forEach(el => loadThumbForElement(videoId, el));
+                const qsThumbEls = document.querySelectorAll(`.qs-thumb[data-video-id="${videoId}"]`);
+                qsThumbEls.forEach(el => loadThumbForElement(videoId, el));
+                
+            } catch (error) {
+                let meta = await getRecord('video_meta', videoId);
+                if (meta) { meta.thumbStatus = 'failed'; await putRecord('video_meta', meta); }
+            }
+            await new Promise(r => setTimeout(r, 100)); // Sleep防止阻塞
+        }
+        thumbQueue.running = false;
+    }
+
+    // =======================
+    // 封面 LRU 缓存与按需加载
+    // =======================
+    const thumbUrlCache = new Map();
+    const MAX_THUMB_URL_CACHE = 80;
+
+    async function getThumbUrl(thumbId) {
+        if (thumbUrlCache.has(thumbId)) {
+            const old = thumbUrlCache.get(thumbId);
+            thumbUrlCache.delete(thumbId);
+            thumbUrlCache.set(thumbId, old);
+            return old;
+        }
+        const thumbRecord = await getRecord('video_thumb', thumbId);
+        if (!thumbRecord || !thumbRecord.blob) return null;
+
+        const url = URL.createObjectURL(thumbRecord.blob);
+        thumbUrlCache.set(thumbId, url);
+
+        if (thumbUrlCache.size > MAX_THUMB_URL_CACHE) {
+            const firstKey = thumbUrlCache.keys().next().value;
+            URL.revokeObjectURL(thumbUrlCache.get(firstKey));
+            thumbUrlCache.delete(firstKey);
+        }
+        return url;
+    }
+
+    async function loadThumbForElement(videoId, el) {
+        const meta = await getRecord('video_meta', videoId);
+        if (!meta || !meta.hasThumb || !meta.thumbId) return;
+        
+        const url = await getThumbUrl(meta.thumbId);
+        if (!url) return;
+
+        el.innerHTML = `<img src="${url}" alt="封面"> <span class="thumb-duration">${formatTime(meta.duration)}</span>`;
+    }
+
+    const thumbObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+            const videoId = el.dataset.videoId;
+            if (videoId) loadThumbForElement(videoId, el);
+            thumbObserver.unobserve(el);
+        });
+    }, { threshold: 0.1 });
+
+    // =======================
+    // 视频库列表分页与渲染
+    // =======================
+    const videoPageState = { folderId: 'default', pageSize: 30, offset: 0, hasMore: true, loading: false, list: [] };
+
+    async function queryVideoMetaPage(folderId, offset = 0, limit = 30) {
+        // 由于 meta 表非常轻量，为了严谨支持多端排序，采用读取特定文件夹全部 meta 后切片
+        const allMetas = await idbRequest(db.transaction('video_meta').objectStore('video_meta').index('folderId').getAll(folderId));
+        allMetas.sort((a,b) => b.createdAt - a.createdAt);
+        return allMetas.slice(offset, offset + limit);
+    }
+
+    async function loadFirstPage(folderId) {
+        videoPageState.folderId = folderId;
+        videoPageState.offset = 0;
+        videoPageState.hasMore = true;
+        videoPageState.list = [];
+        UI.libVideoList.innerHTML = '';
+        
+        folders = await idbRequest(db.transaction('folders').objectStore('folders').getAll());
+        folders.sort((a,b) => a.createdAt - b.createdAt);
+        await renderFolders();
+
+        await loadNextPage();
+    }
+
+    async function loadNextPage() {
+        if (videoPageState.loading || !videoPageState.hasMore) return;
+        videoPageState.loading = true;
+        UI.loadingMore.classList.add('show');
+
+        const page = await queryVideoMetaPage(videoPageState.folderId, videoPageState.offset, videoPageState.pageSize);
+        if (page.length < videoPageState.pageSize) videoPageState.hasMore = false;
+        
+        videoPageState.offset += page.length;
+        videoPageState.list.push(...page);
+        
+        appendVideoCards(page);
+        
+        UI.loadingMore.classList.remove('show');
+        videoPageState.loading = false;
+    }
+
+    // 滚动触底加载
+    UI.libContentScroll.addEventListener('scroll', () => {
+        const nearBottom = UI.libContentScroll.scrollTop + UI.libContentScroll.clientHeight >= UI.libContentScroll.scrollHeight - 160;
+        if (nearBottom) loadNextPage();
+    });
+
+    async function renderFolders() {
+        // 极速获取 meta count
+        const metaList = await idbRequest(db.transaction('video_meta').objectStore('video_meta').getAll());
+        const counts = {};
+        metaList.forEach(m => { counts[m.folderId] = (counts[m.folderId] || 0) + 1; });
+
+        UI.folderStrip.innerHTML = '';
+        folders.forEach(f => {
+            const el = document.createElement('div');
+            el.className = `folder-card ${f.id === currentFolderId ? 'active' : ''}`;
+            el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${escapeHtml(f.name)}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+            el.addEventListener('click', () => { currentFolderId = f.id; loadFirstPage(f.id); });
+            UI.folderStrip.appendChild(el);
+        });
+
+        const currentFolder = folders.find(f => f.id === currentFolderId) || {name: '默认文件夹'};
+        const totalInFolder = counts[currentFolderId] || 0;
+        UI.libVideoTitle.textContent = `${currentFolder.name} · ${totalInFolder} 个视频`;
+        
+        if (totalInFolder === 0) {
+            UI.libVideoList.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted-text); font-size:13px;">当前文件夹为空</div>`;
+        }
+    }
+
+    function appendVideoCards(list) {
+        list.forEach(meta => {
+            const item = document.createElement('div');
+            item.className = 'video-item';
+            
+            item.innerHTML = `
+              <div class="thumb" data-video-id="${meta.id}" style="padding:0; overflow:hidden;">
+                ${ICONS.film}
+              </div>
+              <div class="video-main">
+                <div class="video-name">${escapeHtml(meta.name)}</div>
+                <div class="video-meta">${formatSize(meta.size)} · ${formatTime(meta.duration)}</div>
+                <div class="video-actions">
+                  <button class="delete-btn" data-action="delete">${ICONS.trash} 删除</button>
+                </div>
+              </div>
+            `;
+            
+            item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+                if(confirm(`确定删除「${meta.name}」吗？`)) await deleteVideo(meta.id);
+            });
+            
+            UI.libVideoList.appendChild(item);
+            
+            const thumbEl = item.querySelector('.thumb');
+            thumbObserver.observe(thumbEl);
+
+            // 若封面未生成，推入后台队列
+            if (!meta.hasThumb && meta.thumbStatus !== 'processing') {
+                enqueueThumb(meta.id);
+            }
+        });
+    }
+
+    // =======================
+    // 快速选片弹窗
+    // =======================
+    function openQuickPicker(index) {
+      pendingScreenIndex = index;
+      UI.qsTargetScreen.textContent = `屏幕 ${index + 1}`;
+      qsFolderId = currentFolderId; 
+      UI.qsOverlay.classList.add('show');
+      renderQuickPickerList();
+    }
+    
+    UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
+
+    async function renderQuickPickerList() {
+      // 获取文件夹分类（复用 metaList 方案）
+      const metaList = await idbRequest(db.transaction('video_meta').objectStore('video_meta').getAll());
+      const counts = {};
+      metaList.forEach(m => { counts[m.folderId] = (counts[m.folderId] || 0) + 1; });
+
+      UI.qsFolderStrip.innerHTML = '';
+      folders.forEach(f => {
+        const el = document.createElement('div');
+        el.className = `folder-card ${f.id === qsFolderId ? 'active' : ''}`;
+        el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${escapeHtml(f.name)}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+        el.addEventListener('click', () => { qsFolderId = f.id; renderQuickPickerList(); });
+        UI.qsFolderStrip.appendChild(el);
+      });
+
+      // 获取前 30 个视频进行渲染
+      const page = await queryVideoMetaPage(qsFolderId, 0, 30);
+      UI.qsVideoList.innerHTML = page.length ? '' : `<div style="color:var(--muted-text); padding:20px; font-size:13px; text-align:center; width:100%;">当前文件夹暂无视频</div>`;
+      
+      page.forEach(meta => {
+        const item = document.createElement('div');
+        item.className = 'qs-item';
+        item.innerHTML = `<div class="qs-thumb" data-video-id="${meta.id}" style="padding:0; overflow:hidden;">${ICONS.film}</div><div class="qs-name">${escapeHtml(meta.name)}</div>`;
+        
+        item.addEventListener('click', () => {
+          loadVideoToScreen(pendingScreenIndex, meta.id);
+          UI.qsOverlay.classList.remove('show');
+        });
+        UI.qsVideoList.appendChild(item);
+        
+        // 懒加载缩略图
+        const thumbEl = item.querySelector('.qs-thumb');
+        thumbObserver.observe(thumbEl);
+        if (!meta.hasThumb && meta.thumbStatus !== 'processing') enqueueThumb(meta.id);
+      });
+    }
+
+    // =======================
+    // 四屏播放器逻辑 (引入按需读取blob机制)
+    // =======================
     function initPlayers() {
       for(let i=0; i<4; i++) {
         const div = document.createElement('div');
@@ -429,23 +770,16 @@
         UI.playerGrid.appendChild(div);
 
         const player = {
-          index: i,
-          video: div.querySelector('video'),
-          card: div,
+          index: i, card: div, video: div.querySelector('video'),
           placeholder: div.querySelector('.screen-placeholder'),
           tapLayer: div.querySelector('.tap-layer'),
           controls: div.querySelector('.screen-controls'),
-          btnPlay: div.querySelector('.btn-play'),
-          btnRw: div.querySelector('.btn-rw'),
-          btnFf: div.querySelector('.btn-ff'),
-          btnSwitch: div.querySelector('.btn-switch'),
-          btnSpeed: div.querySelector('.btn-speed'),
-          btnFit: div.querySelector('.btn-fit'),
-          progBar: div.querySelector('.prog-bar'),
-          timeCur: div.querySelector('.time-cur'),
+          btnPlay: div.querySelector('.btn-play'), btnRw: div.querySelector('.btn-rw'),
+          btnFf: div.querySelector('.btn-ff'), btnSwitch: div.querySelector('.btn-switch'),
+          btnSpeed: div.querySelector('.btn-speed'), btnFit: div.querySelector('.btn-fit'),
+          progBar: div.querySelector('.prog-bar'), timeCur: div.querySelector('.time-cur'),
           timeDur: div.querySelector('.time-dur'),
-          speedVal: 1.0, isRotated: false, hideTimer: null,
-          file: null, url: null
+          speedVal: 1.0, isRotated: false, hideTimer: null, file: null, url: null
         };
         players.push(player);
 
@@ -453,29 +787,20 @@
           if(isLocked) return;
           player.controls.classList.add('active');
           clearTimeout(player.hideTimer);
-          player.hideTimer = setTimeout(() => {
-            player.controls.classList.remove('active');
-          }, 5000);
+          player.hideTimer = setTimeout(() => { player.controls.classList.remove('active'); }, 5000);
         };
 
         player.tapLayer.addEventListener('click', () => {
           if(isLocked) return;
-          if(!player.file) {
-            openQuickPicker(i);
-          } else {
+          if(!player.file) openQuickPicker(i);
+          else {
             if (player.controls.classList.contains('active')) {
-                player.controls.classList.remove('active');
-                clearTimeout(player.hideTimer);
-            } else {
-                showControls();
-            }
+                player.controls.classList.remove('active'); clearTimeout(player.hideTimer);
+            } else { showControls(); }
           }
         });
 
-        player.controls.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showControls();
-        });
+        player.controls.addEventListener('click', (e) => { e.stopPropagation(); showControls(); });
 
         player.btnPlay.addEventListener('click', () => {
           if(player.video.paused) player.video.play(); else player.video.pause();
@@ -490,7 +815,6 @@
         player.btnFit.addEventListener('click', () => {
           player.isRotated = !player.isRotated;
           if (player.isRotated) {
-            // 获取当前容器宽高，计算出旋转后需补偿放大的 scale 值，确保完美铺满
             const rect = player.card.getBoundingClientRect();
             const scale = Math.max(rect.width / rect.height, rect.height / rect.width);
             player.video.style.transform = `rotate(90deg) scale(${scale})`;
@@ -520,57 +844,71 @@
       }
     }
 
-    // --- 锁屏逻辑 ---
+    async function loadVideoToScreen(screenIndex, videoId) {
+        const meta = await getRecord('video_meta', videoId);
+        if(!meta) return showToast('视频不存在');
+        const blobRecord = await getRecord('video_blob', meta.blobId);
+        if(!blobRecord || !blobRecord.blob) return showToast('视频文件已丢失');
+
+        const player = players[screenIndex];
+        const file = new File([blobRecord.blob], meta.name, { type: meta.type || 'video/mp4' });
+
+        if (player.url) URL.revokeObjectURL(player.url);
+
+        player.file = file;
+        player.url = URL.createObjectURL(file);
+        player.video.src = player.url;
+        player.video.muted = globalMuted;
+        player.video.play().catch(()=>{});
+
+        player.placeholder.style.display = 'none';
+        player.controls.classList.add('active'); 
+        clearTimeout(player.hideTimer);
+        player.hideTimer = setTimeout(()=> player.controls.classList.remove('active'), 5000);
+        player.btnPlay.innerHTML = ICONS.pause;
+
+        meta.lastPlayAt = Date.now();
+        meta.updatedAt = Date.now();
+        await putRecord('video_meta', meta);
+
+        updateGlobalIcons();
+    }
+
+    // --- 全局控制与锁屏 ---
     document.getElementById('tbLock').addEventListener('click', () => {
-      isLocked = true;
-      UI.app.classList.add('is-locked'); 
-      updateGlobalIcons();
-      showToast('界面已锁定');
+      isLocked = true; UI.app.classList.add('is-locked'); 
+      updateGlobalIcons(); showToast('界面已锁定');
       players.forEach(p => p.controls.classList.remove('active'));
     });
 
     document.addEventListener('click', (e) => {
       if (!isLocked) return;
       if (e.target.closest('#btnUnlock')) {
-        isLocked = false;
-        UI.app.classList.remove('is-locked');
-        UI.lockMask.classList.remove('show');
-        updateGlobalIcons();
-        showToast('已解锁');
-        e.stopPropagation();
-        e.preventDefault();
-        return;
+        isLocked = false; UI.app.classList.remove('is-locked'); UI.lockMask.classList.remove('show');
+        updateGlobalIcons(); showToast('已解锁');
+        e.stopPropagation(); e.preventDefault(); return;
       }
       if (e.target.closest('.play-page') || e.target.closest('#lockMask')) {
-        UI.lockMask.classList.toggle('show');
-        e.stopPropagation();
-        e.preventDefault();
+        UI.lockMask.classList.toggle('show'); e.stopPropagation(); e.preventDefault();
       }
     }, true);
 
-    // --- 全局工具栏唤醒 ---
     UI.globalToolbar.addEventListener('click', (e) => {
       if(isLocked) return;
       if (!UI.globalToolbar.classList.contains('is-awake')) {
         UI.globalToolbar.classList.add('is-awake');
-        clearTimeout(toolbarTimer);
-        toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
-        e.stopPropagation();
-        e.preventDefault();
-        return;
+        clearTimeout(toolbarTimer); toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
+        e.stopPropagation(); e.preventDefault(); return;
       }
-      clearTimeout(toolbarTimer);
-      toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
+      clearTimeout(toolbarTimer); toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
     }, true);
 
     function updateGlobalIcons() {
       const anyPlaying = players.some(p => p.file && !p.video.paused);
       document.getElementById('iconPlayAll').innerHTML = anyPlaying ? ICONS.pause : ICONS.play;
       document.getElementById('tbPlayAll').querySelector('.tb-text').textContent = anyPlaying ? '全部暂停' : '全部播放';
-      
       document.getElementById('iconMuteAll').innerHTML = globalMuted ? ICONS.mute : ICONS.unmute;
       document.getElementById('tbMuteAll').querySelector('.tb-text').textContent = globalMuted ? '全部静音' : '全部开声';
-      
       document.getElementById('iconLock').innerHTML = isLocked ? ICONS.lock : ICONS.unlock;
     }
 
@@ -598,141 +936,34 @@
         p.video.removeAttribute('src'); p.video.load();
         p.video.style.transform = 'none'; p.isRotated = false;
         p.btnFit.innerHTML = `${ICONS.rotate} <span>横屏</span>`;
-        p.placeholder.style.display = 'flex';
-        p.controls.classList.remove('active');
+        p.placeholder.style.display = 'flex'; p.controls.classList.remove('active');
       });
       updateGlobalIcons(); showToast('已清空全部屏幕');
     });
 
-    // --- 底部导航/收起 ---
-    UI.collapseHandle.addEventListener('click', () => {
-      UI.app.classList.toggle('tab-collapsed');
-    });
+    UI.collapseHandle.addEventListener('click', () => { UI.app.classList.toggle('tab-collapsed'); });
 
     UI.tabPlay.addEventListener('click', () => {
       UI.playPage.classList.add('active'); UI.libPage.classList.remove('active');
       UI.tabPlay.classList.add('active'); UI.tabLib.classList.remove('active');
-      UI.collapseHandle.style.opacity = '1';
-      UI.collapseHandle.style.pointerEvents = 'auto';
+      UI.collapseHandle.style.opacity = '1'; UI.collapseHandle.style.pointerEvents = 'auto';
     });
     
     UI.tabLib.addEventListener('click', () => {
       UI.playPage.classList.remove('active'); UI.libPage.classList.add('active');
       UI.tabPlay.classList.remove('active'); UI.tabLib.classList.add('active');
-      UI.collapseHandle.style.opacity = '0';
-      UI.collapseHandle.style.pointerEvents = 'none';
-      loadData();
+      UI.collapseHandle.style.opacity = '0'; UI.collapseHandle.style.pointerEvents = 'none';
+      loadFirstPage(currentFolderId);
     });
 
-    // --- 快速选片 ---
-    function openQuickPicker(index) {
-      pendingScreenIndex = index;
-      UI.qsTargetScreen.textContent = `屏幕 ${index + 1}`;
-      qsFolderId = currentFolderId; 
-      UI.qsOverlay.classList.add('show');
-      renderQuickPickerList();
-    }
-    
-    UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
-
-    async function renderQuickPickerList() {
-      const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
-      const counts = {};
-      allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
-
-      UI.qsFolderStrip.innerHTML = '';
-      folders.forEach(f => {
-        const el = document.createElement('div');
-        el.className = `folder-card ${f.id === qsFolderId ? 'active' : ''}`;
-        el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
-        el.addEventListener('click', () => { qsFolderId = f.id; renderQuickPickerList(); });
-        UI.qsFolderStrip.appendChild(el);
-      });
-
-      const tx = db.transaction('videos').objectStore('videos').index('folderId');
-      let videos = await new Promise(r => { const req = tx.getAll(qsFolderId); req.onsuccess=()=>r(req.result); });
-      videos.sort((a,b)=>b.createdAt - a.createdAt);
-      
-      UI.qsVideoList.innerHTML = videos.length ? '' : `<div style="color:var(--muted-text); padding:20px; font-size:13px; text-align:center; width:100%;">当前文件夹暂无视频</div>`;
-      
-      videos.forEach(v => {
-        const item = document.createElement('div');
-        item.className = 'qs-item';
-        
-        const thumbContent = v.thumb ? `<img src="${v.thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">` : ICONS.film;
-        item.innerHTML = `<div class="qs-thumb" style="padding:0; overflow:hidden;">${thumbContent}</div><div class="qs-name">${v.name}</div>`;
-        
-        item.addEventListener('click', () => {
-          const p = players[pendingScreenIndex];
-          p.file = v.blob;
-          if(p.url) URL.revokeObjectURL(p.url);
-          p.url = URL.createObjectURL(p.file);
-          p.video.src = p.url;
-          p.video.muted = globalMuted;
-          p.video.play().catch(()=>{});
-          p.placeholder.style.display = 'none';
-          
-          p.controls.classList.add('active'); 
-          clearTimeout(p.hideTimer);
-          p.hideTimer = setTimeout(()=> p.controls.classList.remove('active'), 5000);
-          p.btnPlay.innerHTML = ICONS.pause;
-          
-          UI.qsOverlay.classList.remove('show');
-          updateGlobalIcons();
-        });
-        UI.qsVideoList.appendChild(item);
-      });
-    }
-
-    // --- 视频库渲染 ---
-    async function renderLibrary() {
-      const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
-      const counts = {};
-      allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
-
-      UI.folderStrip.innerHTML = '';
-      folders.forEach(f => {
-        const el = document.createElement('div');
-        el.className = `folder-card ${f.id === currentFolderId ? 'active' : ''}`;
-        el.innerHTML = `<div class="folder-icon">${ICONS.folder}</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
-        el.addEventListener('click', () => { currentFolderId = f.id; loadData(); });
-        UI.folderStrip.appendChild(el);
-      });
-
-      const currentFolder = folders.find(f => f.id === currentFolderId) || {name: '默认文件夹'};
-      UI.libVideoTitle.textContent = `${currentFolder.name} · ${currentVideos.length} 个视频`;
-      UI.libVideoList.innerHTML = currentVideos.length ? '' : `<div style="text-align:center; padding:40px; color:var(--muted-text); font-size:13px;">当前文件夹为空</div>`;
-      
-      currentVideos.forEach(v => {
-        const el = document.createElement('div');
-        el.className = 'video-item';
-        
-        const thumbContent = v.thumb ? `<img src="${v.thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:9px;">` : ICONS.film;
-        
-        el.innerHTML = `
-          <div class="thumb" style="padding:0; overflow:hidden;">${thumbContent}</div>
-          <div class="video-main">
-            <div class="video-name">${v.name}</div>
-            <div class="video-meta">${(v.blob.size / 1024 / 1024).toFixed(1)} MB · ${new Date(v.createdAt).toLocaleDateString()}</div>
-            <div class="video-actions">
-              <button class="delete-btn">${ICONS.trash} 删除</button>
-            </div>
-          </div>
-        `;
-        el.querySelector('.delete-btn').addEventListener('click', () => {
-          if(confirm(`确定删除「${v.name}」吗？`)) {
-            db.transaction('videos', 'readwrite').objectStore('videos').delete(v.id).onsuccess = () => { showToast('已删除'); loadData(); };
-          }
-        });
-        UI.libVideoList.appendChild(el);
-      });
-    }
-
-    document.getElementById('btnNewFolder').addEventListener('click', () => {
+    // =======================
+    // 数据维护 (增加、删除)
+    // =======================
+    document.getElementById('btnNewFolder').addEventListener('click', async () => {
       const name = prompt('文件夹名称');
       if(name && name.trim()) {
-        db.transaction('folders', 'readwrite').objectStore('folders').put({ id: 'f_'+Date.now(), name: name.trim(), createdAt: Date.now() });
-        loadData();
+        await putRecord('folders', { id: 'f_'+Date.now(), name: name.trim(), createdAt: Date.now() });
+        loadFirstPage(currentFolderId);
       }
     });
 
@@ -740,37 +971,69 @@
       const files = Array.from(e.target.files);
       if(!files.length) return;
       
-      showToast('正在提取视频封面并保存...');
-      
-      // 串行生成封面，避免并发导致浏览器崩溃
-      const processedFiles = [];
-      for(let i = 0; i < files.length; i++) {
-          const thumb = await extractVideoFrame(files[i]);
-          processedFiles.push({ file: files[i], thumb });
-      }
+      try {
+        await checkStorageBeforeImport(files);
+      } catch (err) { return; }
 
-      const tx = db.transaction('videos', 'readwrite');
-      const store = tx.objectStore('videos');
+      showToast(`开始导入 ${files.length} 个视频...`);
       
-      processedFiles.forEach((item, idx) => {
-          store.put({ 
-              id: 'v_'+Date.now()+'_'+idx, 
-              folderId: currentFolderId, 
-              name: item.file.name, 
-              blob: item.file, 
-              thumb: item.thumb, // 将提取到的封面存入数据库
-              createdAt: Date.now() + idx 
-          });
-      });
+      for(let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const videoId = 'v_' + Date.now() + '_' + i;
+          const blobId = 'b_' + videoId;
+          const thumbId = 't_' + videoId;
+
+          try {
+              await putRecord('video_blob', { id: blobId, blob: file, createdAt: Date.now() });
+              const meta = {
+                  id: videoId, folderId: currentFolderId, name: file.name, type: file.type || 'video/mp4',
+                  size: file.size, duration: 0, width: 0, height: 0, blobId, thumbId,
+                  hasThumb: false, thumbStatus: 'pending', createdAt: Date.now() + i, updatedAt: Date.now(), lastPlayAt: null
+              };
+              await putRecord('video_meta', meta);
+              enqueueThumb(videoId);
+          } catch (error) {
+              if (error.name === 'QuotaExceededError') {
+                  showToast('存储空间不足，部分视频导入失败');
+                  break;
+              }
+          }
+      }
       
-      tx.oncomplete = () => { 
-        e.target.value = ''; 
-        loadData(); 
-        showToast('视频添加成功'); 
-      };
+      e.target.value = ''; 
+      await loadFirstPage(currentFolderId); 
+      showToast(`导入完成，后台静默生成封面中`); 
     });
 
-    initDB().then(() => { initPlayers(); loadData(); updateGlobalIcons(); });
+    async function deleteVideo(videoId) {
+        const meta = await getRecord('video_meta', videoId);
+        if (!meta) return;
+
+        const tx = db.transaction(['video_meta', 'video_blob', 'video_thumb'], 'readwrite');
+        tx.objectStore('video_meta').delete(videoId);
+        if (meta.blobId) tx.objectStore('video_blob').delete(meta.blobId);
+        if (meta.thumbId) {
+            tx.objectStore('video_thumb').delete(meta.thumbId);
+            const url = thumbUrlCache.get(meta.thumbId);
+            if (url) { URL.revokeObjectURL(url); thumbUrlCache.delete(meta.thumbId); }
+        }
+        await txDone(tx);
+        showToast('视频已删除');
+        
+        // 如果删除的是播放器里正在播放的视频，则清空该屏
+        players.forEach(p => {
+           if (p.file && p.file.name === meta.name) { 
+               p.video.pause(); p.file = null; 
+               if(p.url) URL.revokeObjectURL(p.url); 
+               p.video.removeAttribute('src'); p.placeholder.style.display = 'flex';
+               p.controls.classList.remove('active');
+           } 
+        });
+        
+        loadFirstPage(currentFolderId);
+    }
+
+    initDB().then(() => { initPlayers(); loadFirstPage(currentFolderId); updateGlobalIcons(); });
   </script>
 </body>
 </html>
