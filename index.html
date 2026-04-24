@@ -10,18 +10,43 @@
 
   <style>
     :root {
-      --bg: #f4f7fb;
-      --bg-dark: #0f172a;
-      --text: #111827;
       --blue: #0b73ff;
       --blue2: #2563eb;
       --red: #ef4444;
       --tab-height: 60px;
+
+      /* 白天模式 (亮色背景) */
+      --app-bg: #f4f7fb;
+      --app-text: #111827;
+      --card-bg: #fff;
+      --card-border: #e5e7eb;
+      --header-bg: rgba(247, 249, 253, 0.92);
+      --header-border: rgba(226, 232, 240, 0.72);
+      --tabbar-bg: #0f172a; 
+      --folder-active-bg: #f8fbff;
+      --muted-text: #6b7280;
+    }
+
+    /* 黑夜模式 (暗色背景) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --app-bg: #020617;
+        --app-text: #f8fafc;
+        --card-bg: #1e293b;
+        --card-border: rgba(255,255,255,0.05);
+        --header-bg: rgba(2, 6, 23, 0.92);
+        --header-border: rgba(255,255,255,0.05);
+        --tabbar-bg: #020617;
+        --folder-active-bg: #0f172a;
+        --muted-text: #94a3b8;
+      }
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; touch-action: manipulation; overscroll-behavior: none; }
-    body { padding-top: env(safe-area-inset-top); background: var(--bg-dark); color: #fff; }
+    
+    /* 背景跟随系统白天/黑夜动态切换 */
+    body { padding-top: env(safe-area-inset-top); background: var(--app-bg); color: var(--app-text); transition: background 0.3s, color 0.3s; }
     button { border: 0; cursor: pointer; background: transparent; font-family: inherit; user-select: none; }
     input[type="file"] { display: none; }
 
@@ -30,40 +55,38 @@
     .page.active { display: flex; }
 
     /* ================= 播放页 ================= */
-    .play-page { background: #020617; position: relative; }
+    .play-page { position: relative; }
     .player-shell { flex: 1; position: relative; padding: 8px; overflow: hidden; display: flex; flex-direction: column; }
     .player-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; min-height: 0; }
     
+    /* 视频容器始终保持深色包裹 */
     .screen-card { position: relative; border-radius: 12px; background: #1e293b; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
     
     .video-container { position: absolute; inset: 0; background: #000; overflow: hidden; }
     .video-container video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
     
     .screen-label { position: absolute; left: 10px; top: 10px; z-index: 10; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
-
     .screen-placeholder { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #1e293b, #0f172a); pointer-events: none; }
     .placeholder-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; margin-bottom: 8px; }
     .placeholder-text { font-size: 12px; color: #64748b; }
+    
     .tap-layer { position: absolute; inset: 0; z-index: 15; cursor: pointer; }
 
-    /* 单屏控制面板悬浮、淡入淡出、不占位 */
+    /* 单屏悬浮控制面板 */
     .screen-controls { position: absolute; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 10px 8px 8px; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
     .screen-controls.active { opacity: 1; pointer-events: auto; }
     
     .qm-progress-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #94a3b8; }
     .qm-progress-bar { flex: 1; height: 3px; accent-color: #3b82f6; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; -webkit-appearance: none; }
     .qm-progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-
     .qm-center { display: flex; justify-content: center; align-items: center; gap: 24px; }
     .qm-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
     .qm-btn.play { width: 34px; height: 34px; font-size: 16px; background: rgba(255,255,255,0.15); }
-    
     .qm-footer { display: flex; justify-content: space-between; align-items: center; }
     .qm-util { background: rgba(255,255,255,0.05); padding: 4px 6px; border-radius: 6px; font-size: 10px; color: #cbd5e1; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
 
-    /* ================= 锁屏遮罩逻辑优化 ================= */
+    /* ================= 锁屏 ================= */
     .app.is-locked .global-toolbar { opacity: 0 !important; pointer-events: none !important; }
-    
     .lock-mask { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
     .lock-mask.show { display: flex; }
     .unlock-btn { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
@@ -76,65 +99,59 @@
     .tb-icon { width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 14px; }
     .tb-text { font-size: 10px; font-weight: 500; }
 
-    /* ================= 底部导航与手柄 ================= */
+    /* ================= 底部导航 ================= */
     .tabbar-wrapper { flex: 0 0 auto; position: relative; z-index: 30; }
-    
     .collapse-handle { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 60px; height: 24px; background: #1e293b; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; color: #94a3b8; box-shadow: 0 -4px 12px rgba(0,0,0,0.3); cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; transition: transform 0.2s, opacity 0.3s; }
     .collapse-handle svg { width: 18px; height: 18px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .app.tab-collapsed .collapse-handle svg { transform: rotate(180deg); }
     .collapse-handle:active { transform: translateX(-50%) scale(0.95); }
-    
-    .tabbar { height: calc(var(--tab-height) + env(safe-area-inset-bottom)); background: #0f172a; display: grid; grid-template-columns: 1fr 1fr; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+    .tabbar { height: calc(var(--tab-height) + env(safe-area-inset-bottom)); background: var(--tabbar-bg); display: grid; grid-template-columns: 1fr 1fr; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
     .app.tab-collapsed .tabbar { height: 0; padding-bottom: 0; border-top: none; }
-    
     .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; font-size: 11px; gap: 4px; font-weight: 600; }
     .tab.active { color: #fff; }
     .tab-icon { font-size: 20px; }
 
-    /* ================= 选片弹窗 ================= */
+    /* ================= 选片弹窗 (支持日夜背景与视频库同款配色) ================= */
     .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
     .quick-sheet-overlay.show { display: flex; }
-    .quick-sheet { width: 100%; background: #1e293b; border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); color: #fff; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .quick-sheet { width: 100%; background: var(--card-bg); color: var(--app-text); border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
     .quick-sheet-overlay.show .quick-sheet { transform: translateY(0); }
-    .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .qs-title { font-size: 15px; font-weight: 600; }
-    .qs-close { font-size: 20px; color: #94a3b8; }
+    .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .qs-title { font-size: 15px; font-weight: 600; color: var(--app-text); }
+    .qs-close { font-size: 20px; color: var(--muted-text); }
     .qs-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .qs-item { flex: 0 0 120px; overflow: hidden; }
     .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
-    .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255,255,255,0.9); text-align: center; display: block; }
+    .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--app-text); text-align: center; display: block; }
 
-    /* ================= 视频库 (修复堆叠Bug) ================= */
-    /* 只修改了这里的 display: flex; 删去即可，让外层 .page 掌管显隐 */
-    .library-page { background: var(--bg); color: var(--text); height: 100%; }
-    
-    .lib-header-wrap { flex: 0 0 auto; padding: 14px 16px 8px; background: rgba(247, 249, 253, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(226, 232, 240, 0.72); text-align: center; font-size: 20px; font-weight: 800; color: #111827; }
-    
+    /* ================= 视频库 (深度适配日夜模式的精美UI) ================= */
+    .library-page { color: var(--app-text); height: 100%; }
+    .lib-header-wrap { flex: 0 0 auto; padding: 14px 16px 8px; background: var(--header-bg); border-bottom: 1px solid var(--header-border); text-align: center; font-size: 20px; font-weight: 800; color: var(--app-text); transition: all 0.3s; }
     .lib-content { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 12px; -webkit-overflow-scrolling: touch; }
-    .section-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 10px; }
+    .section-title { font-size: 17px; font-weight: 800; color: var(--app-text); margin-bottom: 10px; transition: color 0.3s; }
     
     .folder-strip { display: flex; gap: 10px; overflow-x: auto; padding: 1px 2px 12px; scrollbar-width: none; }
     .folder-strip::-webkit-scrollbar { display: none; }
-    .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #111827; }
-    .folder-card.active { border: 2px solid var(--blue); background: #f8fbff; }
+    .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text); transition: all 0.3s; }
+    .folder-card.active { border: 2px solid var(--blue); background: var(--folder-active-bg); }
     .folder-icon { font-size: 31px; margin-bottom: 7px; }
-    .folder-name { font-size: 12px; font-weight: 800; max-width: 88px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .folder-count { margin-top: 3px; font-size: 10px; color: #6b7280; }
+    .folder-name { font-size: 12px; font-weight: 800; max-width: 88px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--app-text); }
+    .folder-count { margin-top: 3px; font-size: 10px; color: var(--muted-text); }
     
     .library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0 18px; }
     .primary-action { background: var(--blue); color: #fff; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23); }
-    .secondary-action { background: #fff; color: var(--blue2); border: 1px solid #dbeafe; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+    .secondary-action { background: var(--card-bg); color: var(--blue2); border: 1px solid var(--card-border); border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; transition: all 0.3s; }
     
     .video-list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
-    .folder-current { font-size: 15px; font-weight: 800; color: #111827; }
-    .sort-text { font-size: 12px; color: #6b7280; }
+    .folder-current { font-size: 15px; font-weight: 800; color: var(--app-text); }
+    .sort-text { font-size: 12px; color: var(--muted-text); }
     
     .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
-    .video-item { min-height: 78px; border-radius: 14px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .video-item { min-height: 78px; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; transition: all 0.3s; }
     .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 22px; }
     .video-main { min-width: 0; }
-    .video-name { font-size: 14px; font-weight: 800; color: #111827; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
-    .video-meta { font-size: 12px; color: #6b7280; margin-bottom: 7px; }
+    .video-name { font-size: 14px; font-weight: 800; color: var(--app-text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
+    .video-meta { font-size: 12px; color: var(--muted-text); margin-bottom: 7px; }
     .video-actions { display: flex; justify-content: flex-end; }
     .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; }
 
@@ -198,6 +215,8 @@
           <div class="qs-title">选择视频替换 - <span id="qsTargetScreen">屏幕 1</span></div>
           <button class="qs-close" id="qsClose">✕</button>
         </div>
+        <div class="folder-strip" id="qsFolderStrip" style="margin-bottom: 12px; padding-bottom: 8px;"></div>
+        
         <div class="qs-list" id="qsVideoList"></div>
       </div>
     </div>
@@ -206,10 +225,11 @@
   </div>
 
   <script>
-    const DB_NAME = 'video_lib_v12';
+    const DB_NAME = 'video_lib_v13';
     let db = null, folders = [], currentFolderId = 'default', currentVideos = [];
     let isLocked = false, globalMuted = true;
     let pendingScreenIndex = null;
+    let qsFolderId = 'default'; // 选片弹窗独立文件夹追踪
     let toastTimer, toolbarTimer;
     const players = [];
 
@@ -224,6 +244,7 @@
       collapseHandle: document.getElementById('collapseHandle'),
       qsOverlay: document.getElementById('quickSheetOverlay'),
       qsTargetScreen: document.getElementById('qsTargetScreen'),
+      qsFolderStrip: document.getElementById('qsFolderStrip'),
       qsVideoList: document.getElementById('qsVideoList'),
       qsClose: document.getElementById('qsClose'),
       toast: document.getElementById('toast'),
@@ -339,10 +360,20 @@
           }, 5000);
         };
 
+        // 优化点1：点击单屏非控制面板区域（tapLayer），实现显示或隐藏控制台的逻辑
         player.tapLayer.addEventListener('click', () => {
           if(isLocked) return;
-          if(!player.file) openQuickPicker(i);
-          else showControls();
+          if(!player.file) {
+            openQuickPicker(i);
+          } else {
+            // 已有视频时，如果控制台处于激活态，点击画面非面板处则移除 active 隐藏之
+            if (player.controls.classList.contains('active')) {
+                player.controls.classList.remove('active');
+                clearTimeout(player.hideTimer);
+            } else {
+                showControls();
+            }
+          }
         });
 
         player.controls.addEventListener('click', (e) => {
@@ -386,20 +417,17 @@
       }
     }
 
-    // --- 高阶锁屏逻辑 (点击屏幕才显示遮罩，非按钮点击反复切换遮罩) ---
+    // --- 锁屏逻辑 ---
     document.getElementById('tbLock').addEventListener('click', () => {
       isLocked = true;
-      UI.app.classList.add('is-locked'); // 锁定后彻底隐藏悬浮工具栏
+      UI.app.classList.add('is-locked'); 
       updateGlobalIcons();
       showToast('界面已锁定');
       players.forEach(p => p.controls.classList.remove('active'));
     });
 
-    // 捕获全局点击事件处理锁屏后的交互
     document.addEventListener('click', (e) => {
       if (!isLocked) return;
-      
-      // 如果点击的是解锁大按钮
       if (e.target.closest('#btnUnlock')) {
         isLocked = false;
         UI.app.classList.remove('is-locked');
@@ -410,8 +438,6 @@
         e.preventDefault();
         return;
       }
-      
-      // 点击其他任何地方，反复显示/隐藏解锁遮罩
       if (e.target.closest('.play-page') || e.target.closest('#lockMask')) {
         UI.lockMask.classList.toggle('show');
         e.stopPropagation();
@@ -419,12 +445,10 @@
       }
     }, true);
 
-    // --- 全局工具栏两步唤醒逻辑 (在捕获阶段拦截) ---
+    // --- 全局工具栏唤醒逻辑 ---
     UI.globalToolbar.addEventListener('click', (e) => {
       if(isLocked) return;
-      
       if (!UI.globalToolbar.classList.contains('is-awake')) {
-        // 第一步：如果是淡化状态，只唤醒，不触发子元素的点击事件
         UI.globalToolbar.classList.add('is-awake');
         clearTimeout(toolbarTimer);
         toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
@@ -432,7 +456,6 @@
         e.preventDefault();
         return;
       }
-      // 第二步：已经是唤醒状态，允许点击按钮，同时重置计时器
       clearTimeout(toolbarTimer);
       toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
     }, true);
@@ -474,18 +497,18 @@
       updateGlobalIcons(); showToast('已清空全部屏幕');
     });
 
-    // --- 底部导航/收起优化 ---
+    // --- 底部导航/收起 ---
     UI.collapseHandle.addEventListener('click', () => {
       UI.app.classList.toggle('tab-collapsed');
     });
 
-    // --- 切换Tab时隐藏/显示手柄 ---
     UI.tabPlay.addEventListener('click', () => {
       UI.playPage.classList.add('active'); UI.libPage.classList.remove('active');
       UI.tabPlay.classList.add('active'); UI.tabLib.classList.remove('active');
       UI.collapseHandle.style.opacity = '1';
       UI.collapseHandle.style.pointerEvents = 'auto';
     });
+    
     UI.tabLib.addEventListener('click', () => {
       UI.playPage.classList.remove('active'); UI.libPage.classList.add('active');
       UI.tabPlay.classList.remove('active'); UI.tabLib.classList.add('active');
@@ -494,19 +517,40 @@
       loadData();
     });
 
-    // --- 快速选片 ---
+    // --- 优化点2：支持文件夹切换的快速选片 ---
     function openQuickPicker(index) {
       pendingScreenIndex = index;
       UI.qsTargetScreen.textContent = `屏幕 ${index + 1}`;
+      qsFolderId = currentFolderId; // 跟随用户在视频库的当前文件夹
       UI.qsOverlay.classList.add('show');
       renderQuickPickerList();
     }
+    
     UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
 
     async function renderQuickPickerList() {
-      const videos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
+      // 提取全部视频用于渲染文件夹计数器
+      const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
+      const counts = {};
+      allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
+
+      // 渲染文件夹卡片，UI 与主视频库高度一致
+      UI.qsFolderStrip.innerHTML = '';
+      folders.forEach(f => {
+        const el = document.createElement('div');
+        el.className = `folder-card ${f.id === qsFolderId ? 'active' : ''}`;
+        el.innerHTML = `<div class="folder-icon">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+        el.addEventListener('click', () => { qsFolderId = f.id; renderQuickPickerList(); });
+        UI.qsFolderStrip.appendChild(el);
+      });
+
+      // 仅提取所选文件夹内的视频渲染列表
+      const tx = db.transaction('videos').objectStore('videos').index('folderId');
+      let videos = await new Promise(r => { const req = tx.getAll(qsFolderId); req.onsuccess=()=>r(req.result); });
       videos.sort((a,b)=>b.createdAt - a.createdAt);
-      UI.qsVideoList.innerHTML = videos.length ? '' : '<div style="color:#64748b; padding:20px; font-size:13px;">暂无视频，请去视频库添加</div>';
+      
+      UI.qsVideoList.innerHTML = videos.length ? '' : `<div style="color:var(--muted-text); padding:20px; font-size:13px; text-align:center; width:100%;">当前文件夹暂无视频</div>`;
+      
       videos.forEach(v => {
         const item = document.createElement('div');
         item.className = 'qs-item';
@@ -520,10 +564,12 @@
           p.video.muted = globalMuted;
           p.video.play().catch(()=>{});
           p.placeholder.style.display = 'none';
+          
           p.controls.classList.add('active'); 
           clearTimeout(p.hideTimer);
           p.hideTimer = setTimeout(()=> p.controls.classList.remove('active'), 5000);
           p.btnPlay.textContent = '⏸';
+          
           UI.qsOverlay.classList.remove('show');
           updateGlobalIcons();
         });
@@ -533,7 +579,6 @@
 
     // --- 视频库渲染 ---
     async function renderLibrary() {
-      // 获取所有视频用于统计文件夹数量
       const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
       const counts = {};
       allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
@@ -549,7 +594,7 @@
 
       const currentFolder = folders.find(f => f.id === currentFolderId) || {name: '默认文件夹'};
       UI.libVideoTitle.textContent = `${currentFolder.name} · ${currentVideos.length} 个视频`;
-      UI.libVideoList.innerHTML = currentVideos.length ? '' : '<div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">当前文件夹为空</div>';
+      UI.libVideoList.innerHTML = currentVideos.length ? '' : `<div style="text-align:center; padding:40px; color:var(--muted-text); font-size:13px;">当前文件夹为空</div>`;
       
       currentVideos.forEach(v => {
         const el = document.createElement('div');
