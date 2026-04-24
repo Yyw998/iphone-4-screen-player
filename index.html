@@ -6,1982 +6,595 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="四屏视频" />
-  <meta name="theme-color" content="#f6f8fc" />
   <title>四屏本地视频</title>
 
   <style>
     :root {
       --bg: #f4f7fb;
+      --bg-dark: #0f172a;
       --text: #111827;
-      --muted: #6b7280;
       --blue: #0b73ff;
       --blue2: #2563eb;
       --red: #ef4444;
-      --tab-height: 66px;
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-      touch-action: manipulation;
-      overscroll-behavior: none;
-    }
-
-    body {
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-
-    button, label {
-      font-family: inherit;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    button {
-      border: 0;
-      cursor: pointer;
-      background: transparent;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .app {
-      width: 100vw;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: linear-gradient(180deg, #f7f9fd 0%, #eef3fb 100%);
-    }
-
-    .page {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .page.active {
-      display: flex;
-    }
-
-    .play-page {
-      position: relative;
-      background: linear-gradient(180deg, #f7f9fd 0%, #eef3fb 100%);
-    }
-
-    .player-shell {
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
-      padding: 8px 7px 7px;
-      overflow: hidden;
-    }
-
-    .player-grid {
-      width: 100%;
-      height: 100%;
-      min-height: 0;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(2, minmax(0, 1fr));
-      gap: 7px;
-    }
-
-    .screen-card {
-      position: relative;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      border-radius: 13px;
-      background: #020617;
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.13);
-      border: 1px solid rgba(15, 23, 42, 0.12);
-    }
-
-    .screen-card.cover video {
-      object-fit: cover;
-    }
-
-    .video-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background: #000;
-      pointer-events: none;
-    }
-
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      background: #000;
-      pointer-events: none !important;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .screen-placeholder {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.22), transparent 34%),
-        radial-gradient(circle at 78% 72%, rgba(14, 165, 233, 0.18), transparent 32%),
-        linear-gradient(135deg, #0f172a, #111827 58%, #020617);
-      color: rgba(255, 255, 255, 0.86);
-      text-align: center;
-      pointer-events: none;
-      padding: 16px;
-    }
-
-    .placeholder-number {
-      font-size: 24px;
-      font-weight: 900;
-      margin-bottom: 4px;
-    }
-
-    .placeholder-text {
-      font-size: 12px;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.70);
-    }
-
-    .screen-label {
-      position: absolute;
-      left: 9px;
-      top: 8px;
-      z-index: 8;
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 12px;
-      font-weight: 700;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-      max-width: calc(100% - 18px);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .screen-fade-top {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 54px;
-      z-index: 7;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent);
-      pointer-events: none;
-    }
-
-    .tap-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 5;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    .screen-actions {
-      position: absolute;
-      z-index: 32;
-      right: 6px;
-      bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px;
-      border-radius: 13px;
-      background: rgba(2, 6, 23, 0.42);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: opacity .25s ease;
-    }
-
-    .mini-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 9px;
-      background: rgba(15, 23, 42, 0.74);
-      color: #fff;
-      font-size: 15px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 0;
-    }
-
-    .mini-btn:active {
-      transform: scale(0.94);
-      background: rgba(37, 99, 235, 0.72);
-    }
-
-    .screen-status {
-      position: absolute;
-      left: 9px;
-      bottom: 12px;
-      right: 136px;
-      z-index: 9;
-      font-size: 10px;
-      line-height: 1.2;
-      color: rgba(255, 255, 255, 0.82);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      pointer-events: none;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.70);
-    }
-
-    .big-play {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    .big-play.hidden {
-      display: none;
-    }
-
-    .big-play-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.70);
-      color: white;
-      font-size: 22px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .quick-controls {
-      position: absolute;
-      inset: 0;
-      z-index: 36;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.28);
-      pointer-events: none;
-    }
-
-    .quick-controls.show {
-      display: flex;
-    }
-
-    .quick-panel {
-      width: min(92%, 288px);
-      padding: 10px 12px 8px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.76);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.38);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      pointer-events: auto;
-    }
-
-    .quick-buttons {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .quick-btn {
-      width: 48px;
-      height: 40px;
-      border-radius: 999px;
-      background: rgba(2, 6, 23, 0.58);
-      color: #fff;
-      font-size: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .progress-row {
-      display: grid;
-      grid-template-columns: 38px 1fr 38px;
-      align-items: center;
-      gap: 6px;
-      color: rgba(255, 255, 255, 0.86);
-      font-size: 10px;
-    }
-
-    .progress-row input[type="range"] {
-      width: 100%;
-      height: 20px;
-      accent-color: #60a5fa;
-    }
-
-    /* 顶部悬浮工具栏：默认透明，悬浮/触摸后显示 */
-    .global-toolbar {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      width: 206px;
-      height: 52px;
-      transform: translateX(-50%);
-      z-index: 40;
-      border-radius: 999px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(226, 232, 240, 0.86);
-      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      opacity: 0.16;
-      transition: opacity 0.28s ease, transform 0.28s ease, background 0.28s ease;
-    }
-
-    .global-toolbar.is-awake,
-    .global-toolbar:hover,
-    .global-toolbar:focus-within {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .global-toolbar.is-idle {
-      opacity: 0.16;
-      background: rgba(15, 23, 42, 0.44);
-      border-color: rgba(255, 255, 255, 0.10);
-      transform: translateX(-50%) translateY(-2px);
-    }
-
-    .global-toolbar.is-awake .global-icon-btn,
-    .global-toolbar:hover .global-icon-btn,
-    .global-toolbar:focus-within .global-icon-btn {
-      color: #111827;
-    }
-
-    .global-toolbar.is-idle .global-icon-btn {
-      color: rgba(255, 255, 255, 0.92);
-    }
-
-    .global-icon-btn {
-      min-width: 0;
-      height: 52px;
-      padding: 0;
-      color: rgba(255,255,255,.92);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .global-icon-btn:active {
-      background: rgba(219, 234, 254, 0.72);
-    }
-
-    /* 底部手柄：改成更稳定的卡片式拖手 */
-    .tab-toggle-wrap {
-      position: absolute;
-      left: 50%;
-      z-index: 34;
-      transform: translateX(-50%);
-      transition: bottom 0.25s ease;
-    }
-
-    .app:not(.tab-collapsed) .tab-toggle-wrap {
-      bottom: calc(var(--tab-height) + env(safe-area-inset-bottom) - 14px);
-    }
-
-    .app.tab-collapsed .tab-toggle-wrap {
-      bottom: calc(10px + env(safe-area-inset-bottom));
-    }
-
-    .toolbar-handle {
-      width: 52px;
-      height: 22px;
-      border-radius: 999px;
-      background: rgba(106, 122, 144, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.52);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    .toolbar-handle:active {
-      transform: scale(0.96);
-      background: rgba(37, 99, 235, 0.80);
-    }
-
-    .handle-inner {
-      position: relative;
-      width: 24px;
-      height: 12px;
-    }
-
-    .handle-inner::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 0;
-      width: 16px;
-      height: 3px;
-      transform: translateX(-50%);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.48);
-    }
-
-    .handle-inner::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 5px;
-      width: 7px;
-      height: 7px;
-      border-right: 2px solid #fff;
-      border-bottom: 2px solid #fff;
-      transform: translateX(-50%) rotate(45deg);
-      transition: transform 0.22s ease, top 0.22s ease;
-    }
-
-    .app.tab-collapsed .handle-inner::after {
-      top: 6px;
-      transform: translateX(-50%) rotate(-135deg);
-    }
-
-    .app.is-locked .global-toolbar,
-    .app.is-locked .tab-toggle-wrap,
-    .app.is-locked .screen-actions,
-    .app.is-locked .quick-controls {
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-
-    .app-header {
-      flex: 0 0 auto;
-      padding: 14px 16px 8px;
-      background: rgba(247, 249, 253, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.72);
-    }
-
-    .header-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      min-height: 30px;
-    }
-
-    .header-title {
-      margin: 0;
-      text-align: center;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.2px;
-      color: #111827;
-    }
-
-    .header-icon-btn {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      color: #111827;
-      font-size: 20px;
-    }
-
-    .library-content {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 14px 16px 12px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .section-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .section-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .folder-strip {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding: 1px 2px 12px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-
-    .folder-strip::-webkit-scrollbar {
-      display: none;
-    }
-
-    .folder-card {
-      flex: 0 0 108px;
-      height: 92px;
-      border-radius: 13px;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-      padding: 11px 8px 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #111827;
-    }
-
-    .folder-card.active {
-      border: 2px solid var(--blue);
-      background: #f8fbff;
-    }
-
-    .folder-icon {
-      font-size: 31px;
-      line-height: 1;
-      margin-bottom: 7px;
-    }
-
-    .folder-name {
-      font-size: 12px;
-      font-weight: 800;
-      max-width: 88px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .folder-count {
-      margin-top: 3px;
-      font-size: 10px;
-      color: #6b7280;
-    }
-
-    .library-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin: 5px 0 18px;
-    }
-
-    .primary-action, .secondary-action {
-      height: 44px;
-      border-radius: 13px;
-      font-size: 14px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-    }
-
-    .primary-action {
-      background: var(--blue);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23);
-    }
-
-    .secondary-action {
-      background: #fff;
-      color: var(--blue2);
-      border: 1px solid #dbeafe;
-    }
-
-    .video-list-head {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .folder-current {
-      font-size: 15px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .sort-text {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    .video-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding-bottom: 12px;
-    }
-
-    .video-item {
-      min-height: 78px;
-      border-radius: 14px;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
-      padding: 8px;
-      display: grid;
-      grid-template-columns: 84px minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-    }
-
-    .thumb {
-      position: relative;
-      width: 84px;
-      height: 58px;
-      border-radius: 9px;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(14, 165, 233, 0.42), transparent 34%),
-        radial-gradient(circle at 80% 85%, rgba(59, 130, 246, 0.44), transparent 32%),
-        linear-gradient(135deg, #1e3a8a, #0f172a);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 22px;
-    }
-
-    .thumb-duration {
-      position: absolute;
-      right: 4px;
-      bottom: 4px;
-      padding: 2px 5px;
-      border-radius: 6px;
-      background: rgba(0, 0, 0, 0.70);
-      color: #fff;
-      font-size: 10px;
-      line-height: 1.1;
-    }
-
-    .video-main {
-      min-width: 0;
-    }
-
-    .video-name {
-      font-size: 14px;
-      font-weight: 800;
-      color: #111827;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      margin-bottom: 4px;
-    }
-
-    .video-meta {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 7px;
-    }
-
-    .video-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .select-btn, .delete-btn {
-      height: 28px;
-      border-radius: 8px;
-      padding: 0 9px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .select-btn {
-      color: var(--blue2);
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-    }
-
-    .delete-btn {
-      color: var(--red);
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-    }
-
-    .empty-list {
-      border-radius: 16px;
-      min-height: 160px;
-      background: #fff;
-      border: 1px dashed #cbd5e1;
-      color: #6b7280;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      line-height: 1.7;
-      padding: 20px;
-      font-size: 13px;
-    }
-
-    .tabbar {
-      flex: 0 0 auto;
-      height: calc(var(--tab-height) + env(safe-area-inset-bottom));
-      padding: 7px 36px calc(7px + env(safe-area-inset-bottom));
-      background: rgba(255, 255, 255, 0.94);
-      border-top: 1px solid rgba(226, 232, 240, 0.86);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      transition: height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
-    }
-
-    .app.tab-collapsed .tabbar {
-      height: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-      border-top: 0;
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .tab {
-      border-radius: 15px;
-      color: #6b7280;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      gap: 2px;
-    }
-
-    .tab .tab-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    .tab.active {
-      color: var(--blue);
-    }
-
-    .tab.active .tab-icon {
-      background: var(--blue);
-      color: #fff;
-      box-shadow: 0 6px 14px rgba(11, 115, 255, 0.26);
-    }
-
-    .toast {
-      position: fixed;
-      z-index: 100;
-      left: 50%;
-      bottom: calc(82px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      max-width: 86vw;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.92);
-      color: #fff;
-      font-size: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
-      display: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .app.tab-collapsed .toast {
-      bottom: calc(58px + env(safe-area-inset-bottom));
-    }
-
-    .sheet-mask {
-      position: fixed;
-      inset: 0;
-      z-index: 90;
-      display: none;
-      background: rgba(15, 23, 42, 0.38);
-      padding: 16px;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .sheet-mask.show {
-      display: flex;
-    }
-
-    .sheet {
-      width: 100%;
-      max-width: 520px;
-      border-radius: 20px;
-      background: #fff;
-      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.25);
-      padding: 16px;
-    }
-
-    .sheet-title {
-      font-size: 16px;
-      font-weight: 900;
-      margin-bottom: 10px;
-      color: #111827;
-    }
-
-    .target-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .target-btn {
-      height: 42px;
-      border-radius: 12px;
-      background: #eff6ff;
-      color: var(--blue2);
-      font-size: 13px;
-      font-weight: 800;
-      border: 1px solid #bfdbfe;
-    }
-
-    .sheet-cancel {
-      width: 100%;
-      height: 42px;
-      margin-top: 10px;
-      border-radius: 12px;
-      background: #f3f4f6;
-      color: #374151;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .lock-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 120;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(2, 6, 23, 0.28);
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur(1px);
-    }
-
-    .lock-overlay.show {
-      display: flex;
-    }
-
-    .unlock-panel {
-      min-width: 112px;
-      height: 86px;
-      border-radius: 20px;
-      background: rgba(15, 23, 42, 0.78);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.26);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: #fff;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    .unlock-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-      font-size: 22px;
-      border: 1px solid rgba(255,255,255,.14);
-    }
-
-    .unlock-text {
-      font-size: 12px;
-      font-weight: 800;
-      color: rgba(255,255,255,.92);
-    }
-
-    @media (max-width: 390px) {
-      .player-shell { padding: 8px 7px 7px; }
-      .player-grid { gap: 6px; }
-      .mini-btn { width: 27px; height: 27px; font-size: 14px; }
-      .screen-actions { gap: 3px; }
-      .screen-status { right: 130px; }
-      .global-toolbar { width: 196px; height: 50px; top: 9px; }
-      .global-icon-btn { height: 50px; font-size: 21px; }
-      .tab-toggle-wrap { }
-      .toolbar-handle { width: 50px; height: 22px; }
-      .handle-inner { width: 23px; }
-      .app-header { padding: 12px 12px 8px; }
-      .header-title { font-size: 18px; }
-      .library-content { padding: 12px; }
-      .folder-card { flex-basis: 100px; }
-      .video-item { grid-template-columns: 78px minmax(0, 1fr); }
-      .thumb { width: 78px; }
-      .video-actions { gap: 5px; }
-      .select-btn, .delete-btn { padding: 0 7px; font-size: 11px; }
-      .tabbar { padding-left: 26px; padding-right: 26px; }
-    }
+      --tab-height: 60px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; touch-action: manipulation; overscroll-behavior: none; }
+    body { padding-top: env(safe-area-inset-top); background: var(--bg-dark); color: #fff; }
+    button { border: 0; cursor: pointer; background: transparent; font-family: inherit; user-select: none; }
+    input[type="file"] { display: none; }
+
+    .app { width: 100vw; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .page { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
+    .page.active { display: flex; }
+
+    /* ================= 播放页 ================= */
+    .play-page { background: #020617; position: relative; }
+    .player-shell { flex: 1; position: relative; padding: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    .player-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; min-height: 0; }
+    
+    .screen-card { position: relative; border-radius: 12px; background: #1e293b; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+    
+    .video-container { position: absolute; inset: 0; background: #000; overflow: hidden; }
+    .video-container video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+    
+    .screen-label { position: absolute; left: 10px; top: 10px; z-index: 10; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
+
+    .screen-placeholder { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #1e293b, #0f172a); pointer-events: none; }
+    .placeholder-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; margin-bottom: 8px; }
+    .placeholder-text { font-size: 12px; color: #64748b; }
+    .tap-layer { position: absolute; inset: 0; z-index: 15; cursor: pointer; }
+
+    /* 单屏控制面板悬浮、淡入淡出、不占位 */
+    .screen-controls { position: absolute; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 10px 8px 8px; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .screen-controls.active { opacity: 1; pointer-events: auto; }
+    
+    .qm-progress-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #94a3b8; }
+    .qm-progress-bar { flex: 1; height: 3px; accent-color: #3b82f6; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; -webkit-appearance: none; }
+    .qm-progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+
+    .qm-center { display: flex; justify-content: center; align-items: center; gap: 24px; }
+    .qm-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .qm-btn.play { width: 34px; height: 34px; font-size: 16px; background: rgba(255,255,255,0.15); }
+    
+    .qm-footer { display: flex; justify-content: space-between; align-items: center; }
+    .qm-util { background: rgba(255,255,255,0.05); padding: 4px 6px; border-radius: 6px; font-size: 10px; color: #cbd5e1; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+
+    /* ================= 锁屏遮罩逻辑优化 ================= */
+    .app.is-locked .global-toolbar { opacity: 0 !important; pointer-events: none !important; }
+    
+    .lock-mask { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+    .lock-mask.show { display: flex; }
+    .unlock-btn { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .unlock-hint { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+    /* ================= 全局悬浮工具栏 ================= */
+    .global-toolbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 88%; max-width: 360px; height: 68px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; display: grid; grid-template-columns: repeat(4, 1fr); z-index: 40; opacity: 0.15; transition: opacity 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+    .global-toolbar.is-awake { opacity: 1; }
+    .tb-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); gap: 4px; }
+    .tb-icon { width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .tb-text { font-size: 10px; font-weight: 500; }
+
+    /* ================= 底部导航与手柄 ================= */
+    .tabbar-wrapper { flex: 0 0 auto; position: relative; z-index: 30; }
+    
+    .collapse-handle { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 60px; height: 24px; background: #1e293b; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; color: #94a3b8; box-shadow: 0 -4px 12px rgba(0,0,0,0.3); cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; transition: transform 0.2s, opacity 0.3s; }
+    .collapse-handle svg { width: 18px; height: 18px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .app.tab-collapsed .collapse-handle svg { transform: rotate(180deg); }
+    .collapse-handle:active { transform: translateX(-50%) scale(0.95); }
+    
+    .tabbar { height: calc(var(--tab-height) + env(safe-area-inset-bottom)); background: #0f172a; display: grid; grid-template-columns: 1fr 1fr; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+    .app.tab-collapsed .tabbar { height: 0; padding-bottom: 0; border-top: none; }
+    
+    .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; font-size: 11px; gap: 4px; font-weight: 600; }
+    .tab.active { color: #fff; }
+    .tab-icon { font-size: 20px; }
+
+    /* ================= 选片弹窗 ================= */
+    .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
+    .quick-sheet-overlay.show { display: flex; }
+    .quick-sheet { width: 100%; background: #1e293b; border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); color: #fff; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .quick-sheet-overlay.show .quick-sheet { transform: translateY(0); }
+    .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .qs-title { font-size: 15px; font-weight: 600; }
+    .qs-close { font-size: 20px; color: #94a3b8; }
+    .qs-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+    .qs-item { flex: 0 0 120px; overflow: hidden; }
+    .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; }
+    .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255,255,255,0.9); text-align: center; display: block; }
+
+    /* ================= 视频库 (修复堆叠Bug) ================= */
+    /* 只修改了这里的 display: flex; 删去即可，让外层 .page 掌管显隐 */
+    .library-page { background: var(--bg); color: var(--text); height: 100%; }
+    
+    .lib-header-wrap { flex: 0 0 auto; padding: 14px 16px 8px; background: rgba(247, 249, 253, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(226, 232, 240, 0.72); text-align: center; font-size: 20px; font-weight: 800; color: #111827; }
+    
+    .lib-content { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 12px; -webkit-overflow-scrolling: touch; }
+    .section-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 10px; }
+    
+    .folder-strip { display: flex; gap: 10px; overflow-x: auto; padding: 1px 2px 12px; scrollbar-width: none; }
+    .folder-strip::-webkit-scrollbar { display: none; }
+    .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #111827; }
+    .folder-card.active { border: 2px solid var(--blue); background: #f8fbff; }
+    .folder-icon { font-size: 31px; margin-bottom: 7px; }
+    .folder-name { font-size: 12px; font-weight: 800; max-width: 88px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .folder-count { margin-top: 3px; font-size: 10px; color: #6b7280; }
+    
+    .library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0 18px; }
+    .primary-action { background: var(--blue); color: #fff; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: 0 8px 18px rgba(11, 115, 255, 0.23); }
+    .secondary-action { background: #fff; color: var(--blue2); border: 1px solid #dbeafe; border-radius: 13px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+    
+    .video-list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
+    .folder-current { font-size: 15px; font-weight: 800; color: #111827; }
+    .sort-text { font-size: 12px; color: #6b7280; }
+    
+    .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
+    .video-item { min-height: 78px; border-radius: 14px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 22px; }
+    .video-main { min-width: 0; }
+    .video-name { font-size: 14px; font-weight: 800; color: #111827; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
+    .video-meta { font-size: 12px; color: #6b7280; margin-bottom: 7px; }
+    .video-actions { display: flex; justify-content: flex-end; }
+    .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; }
+
+    .toast { position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; }
   </style>
 </head>
 
 <body>
   <div class="app" id="app">
     <section id="playPage" class="page play-page active">
-      <main class="player-shell" id="playerShell">
+      <main class="player-shell">
+        <div class="global-toolbar is-idle" id="globalToolbar">
+          <button class="tb-btn" id="tbPlayAll"><div class="tb-icon" id="iconPlayAll">▶</div><div class="tb-text">全部播放</div></button>
+          <button class="tb-btn" id="tbMuteAll"><div class="tb-icon" id="iconMuteAll">🔇</div><div class="tb-text">全部静音</div></button>
+          <button class="tb-btn" id="tbLock"><div class="tb-icon" id="iconLock">🔓</div><div class="tb-text">锁定</div></button>
+          <button class="tb-btn" id="tbClear"><div class="tb-icon">🗑</div><div class="tb-text">清空</div></button>
+        </div>
         <div class="player-grid" id="playerGrid"></div>
-
-        <div class="global-toolbar is-idle" id="globalToolbar" aria-label="全局播放控制">
-          <button class="global-icon-btn" id="togglePlayAllBtn" type="button" title="全部播放/暂停" aria-label="全部播放/暂停">
-            <span id="globalPlayIcon">▶</span>
-          </button>
-          <button class="global-icon-btn" id="toggleMuteAllBtn" type="button" title="全部静音/开声" aria-label="全部静音/开声">
-            <span id="globalMuteIcon">🔇</span>
-          </button>
-          <button class="global-icon-btn" id="clearBtn" type="button" title="清空" aria-label="清空">🗑</button>
-          <button class="global-icon-btn" id="lockBtn" type="button" title="锁定" aria-label="锁定">🔓</button>
-        </div>
-
-        <div class="tab-toggle-wrap" id="tabToggleWrap">
-          <button class="toolbar-handle" id="tabToggleBtn" type="button" aria-label="收起或展开底部导航">
-            <span class="handle-inner" aria-hidden="true"></span>
-          </button>
-        </div>
       </main>
     </section>
 
-    <section id="libraryPage" class="page">
-      <header class="app-header">
-        <div class="header-row">
-          <h1 class="header-title" id="libraryTitle">视频文件管理</h1>
-          <button class="header-icon-btn" type="button" aria-label="搜索">⌕</button>
-        </div>
-      </header>
-
-      <main class="library-content">
-        <div class="section-title-row">
-          <div class="section-title">文件夹</div>
-        </div>
-
+    <section id="libraryPage" class="page library-page">
+      <header class="lib-header-wrap">视频库</header>
+      <main class="lib-content">
+        <div class="section-title">文件夹</div>
         <div class="folder-strip" id="folderStrip"></div>
-
+        
         <div class="library-actions">
-          <button class="primary-action" id="newFolderBtn" type="button">📁 新建文件夹</button>
-          <label class="secondary-action" for="libraryAddInput">＋ 添加视频</label>
-          <input id="libraryAddInput" type="file" accept="video/*" multiple />
+          <button class="primary-action" id="btnNewFolder">📁 新建文件夹</button>
+          <label class="secondary-action" for="fileInput">＋ 添加视频</label>
+          <input id="fileInput" type="file" accept="video/*" multiple />
         </div>
-
+        
         <div class="video-list-head">
-          <div class="folder-current" id="folderCurrent">默认文件夹 · 0 个视频</div>
-          <div class="sort-text">按名称⌄  ▦</div>
+          <div class="folder-current" id="libVideoTitle">全部视频 · 0 个视频</div>
+          <div class="sort-text">按名称⌄ ▦</div>
         </div>
-
-        <div class="video-list" id="videoList"></div>
+        
+        <div class="video-list" id="libVideoList"></div>
       </main>
     </section>
 
-    <nav class="tabbar" id="tabbar">
-      <button class="tab active" id="tabPlay" type="button">
-        <span class="tab-icon">▶</span>
-        <span>播放</span>
-      </button>
-      <button class="tab" id="tabLibrary" type="button">
-        <span class="tab-icon">📁</span>
-        <span>视频库</span>
-      </button>
-    </nav>
+    <div class="tabbar-wrapper">
+      <div class="collapse-handle" id="collapseHandle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <nav class="tabbar" id="tabbar">
+        <button class="tab active" id="tabPlay"><div class="tab-icon">▶</div><div>播放</div></button>
+        <button class="tab" id="tabLib"><div class="tab-icon">📁</div><div>视频库</div></button>
+      </nav>
+    </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="lock-mask" id="lockMask">
+      <button class="unlock-btn" id="btnUnlock">🔒</button>
+      <div class="unlock-hint">点击图标解锁</div>
+    </div>
 
-    <div class="sheet-mask" id="targetSheet">
-      <div class="sheet">
-        <div class="sheet-title">选择要播放的屏幕</div>
-        <div class="target-grid">
-          <button class="target-btn" data-screen="0" type="button">屏幕1</button>
-          <button class="target-btn" data-screen="1" type="button">屏幕2</button>
-          <button class="target-btn" data-screen="2" type="button">屏幕3</button>
-          <button class="target-btn" data-screen="3" type="button">屏幕4</button>
+    <div class="quick-sheet-overlay" id="quickSheetOverlay">
+      <div class="quick-sheet">
+        <div class="qs-header">
+          <div class="qs-title">选择视频替换 - <span id="qsTargetScreen">屏幕 1</span></div>
+          <button class="qs-close" id="qsClose">✕</button>
         </div>
-        <button class="sheet-cancel" id="targetCancelBtn" type="button">取消</button>
+        <div class="qs-list" id="qsVideoList"></div>
       </div>
     </div>
 
-    <div class="lock-overlay" id="lockOverlay">
-      <button class="unlock-panel" id="unlockBtn" type="button" aria-label="点击解锁">
-        <div class="unlock-icon">🔒</div>
-        <div class="unlock-text">点击解锁</div>
-      </button>
-    </div>
+    <div class="toast" id="toast"></div>
   </div>
 
   <script>
-    const DB_NAME = 'iphone_4_screen_video_library_v7';
-    const DB_VERSION = 1;
-    const DEFAULT_FOLDER_ID = 'default';
-
-    const app = document.getElementById('app');
-    const playPage = document.getElementById('playPage');
-    const libraryPage = document.getElementById('libraryPage');
-    const tabPlay = document.getElementById('tabPlay');
-    const tabLibrary = document.getElementById('tabLibrary');
-    const playerGrid = document.getElementById('playerGrid');
-    const globalToolbar = document.getElementById('globalToolbar');
-    const tabToggleBtn = document.getElementById('tabToggleBtn');
-    const togglePlayAllBtn = document.getElementById('togglePlayAllBtn');
-    const toggleMuteAllBtn = document.getElementById('toggleMuteAllBtn');
-    const globalPlayIcon = document.getElementById('globalPlayIcon');
-    const globalMuteIcon = document.getElementById('globalMuteIcon');
-    const clearBtn = document.getElementById('clearBtn');
-    const lockBtn = document.getElementById('lockBtn');
-    const lockOverlay = document.getElementById('lockOverlay');
-    const unlockBtn = document.getElementById('unlockBtn');
-    const toast = document.getElementById('toast');
-
-    const libraryTitle = document.getElementById('libraryTitle');
-    const folderStrip = document.getElementById('folderStrip');
-    const folderCurrent = document.getElementById('folderCurrent');
-    const videoList = document.getElementById('videoList');
-    const newFolderBtn = document.getElementById('newFolderBtn');
-    const libraryAddInput = document.getElementById('libraryAddInput');
-    const targetSheet = document.getElementById('targetSheet');
-    const targetCancelBtn = document.getElementById('targetCancelBtn');
-
+    const DB_NAME = 'video_lib_v12';
+    let db = null, folders = [], currentFolderId = 'default', currentVideos = [];
+    let isLocked = false, globalMuted = true;
+    let pendingScreenIndex = null;
+    let toastTimer, toolbarTimer;
     const players = [];
-    let db = null;
-    let folders = [];
-    let currentFolderId = DEFAULT_FOLDER_ID;
-    let currentVideos = [];
-    let pendingPickScreen = null;
-    let pendingChooseVideoId = null;
-    let globalMuted = true;
-    let isLocked = false;
-    let toolbarTimer = null;
-    let toastTimer = null;
 
-    document.addEventListener('gesturestart', event => event.preventDefault());
+    const UI = {
+      app: document.getElementById('app'),
+      playPage: document.getElementById('playPage'),
+      libPage: document.getElementById('libraryPage'),
+      tabPlay: document.getElementById('tabPlay'),
+      tabLib: document.getElementById('tabLib'),
+      playerGrid: document.getElementById('playerGrid'),
+      globalToolbar: document.getElementById('globalToolbar'),
+      collapseHandle: document.getElementById('collapseHandle'),
+      qsOverlay: document.getElementById('quickSheetOverlay'),
+      qsTargetScreen: document.getElementById('qsTargetScreen'),
+      qsVideoList: document.getElementById('qsVideoList'),
+      qsClose: document.getElementById('qsClose'),
+      toast: document.getElementById('toast'),
+      folderStrip: document.getElementById('folderStrip'),
+      libVideoList: document.getElementById('libVideoList'),
+      libVideoTitle: document.getElementById('libVideoTitle'),
+      lockMask: document.getElementById('lockMask'),
+      btnUnlock: document.getElementById('btnUnlock')
+    };
 
-    document.addEventListener('touchmove', event => {
-      if (
-        !event.target.closest('input') &&
-        !event.target.closest('label') &&
-        !event.target.closest('button') &&
-        !event.target.closest('.library-content')
-      ) {
-        event.preventDefault();
+    function showToast(msg) {
+      UI.toast.textContent = msg; UI.toast.style.display = 'block';
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => UI.toast.style.display = 'none', 1500);
+    }
+    function formatTime(s) {
+      if(!s || s<0) return '00:00';
+      const m = Math.floor(s/60), sec = Math.floor(s%60);
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    }
+
+    // --- DB操作 ---
+    async function initDB() {
+      return new Promise((resolve) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const d = e.target.result;
+          if(!d.objectStoreNames.contains('folders')) d.createObjectStore('folders', {keyPath:'id'});
+          if(!d.objectStoreNames.contains('videos')) {
+            const s = d.createObjectStore('videos', {keyPath:'id'});
+            s.createIndex('folderId', 'folderId', {unique:false});
+          }
+        };
+        req.onsuccess = async () => {
+          db = req.result;
+          const tx = db.transaction('folders', 'readwrite').objectStore('folders');
+          const d = await new Promise(r => { const rq=tx.get('default'); rq.onsuccess=()=>r(rq.result); });
+          if(!d) tx.put({id:'default', name:'默认文件夹', createdAt:Date.now()});
+          resolve();
+        };
+      });
+    }
+    
+    async function loadData() {
+      folders = await new Promise(r => { const req = db.transaction('folders').objectStore('folders').getAll(); req.onsuccess=()=>r(req.result); });
+      const tx = db.transaction('videos').objectStore('videos').index('folderId');
+      currentVideos = await new Promise(r => { const req = tx.getAll(currentFolderId); req.onsuccess=()=>r(req.result); });
+      currentVideos.sort((a,b)=>b.createdAt - a.createdAt);
+      renderLibrary();
+    }
+
+    // --- 播放器初始化 ---
+    function initPlayers() {
+      for(let i=0; i<4; i++) {
+        const div = document.createElement('div');
+        div.className = 'screen-card';
+        div.innerHTML = `
+          <div class="video-container">
+            <video playsinline webkit-playsinline disablePictureInPicture></video>
+            <div class="screen-label">屏幕 ${i+1}</div>
+            <div class="screen-placeholder">
+              <div class="placeholder-icon">＋</div>
+              <div class="placeholder-text">点击添加视频</div>
+            </div>
+            <div class="tap-layer"></div>
+          </div>
+          
+          <div class="screen-controls" id="controls-${i}">
+            <div class="qm-progress-row">
+              <span class="time-cur">00:00</span>
+              <input type="range" class="prog-bar qm-progress-bar" min="0" max="100" value="0">
+              <span class="time-dur">00:00</span>
+            </div>
+            <div class="qm-center">
+              <button class="qm-btn btn-rw">⏪</button>
+              <button class="qm-btn play btn-play">▶</button>
+              <button class="qm-btn btn-ff">⏩</button>
+            </div>
+            <div class="qm-footer">
+              <button class="qm-util btn-switch">🔁 切换</button>
+              <button class="qm-util btn-speed">1.0x</button>
+              <button class="qm-util btn-fit">⛶ 适配</button>
+            </div>
+          </div>
+        `;
+        UI.playerGrid.appendChild(div);
+
+        const player = {
+          index: i,
+          video: div.querySelector('video'),
+          placeholder: div.querySelector('.screen-placeholder'),
+          tapLayer: div.querySelector('.tap-layer'),
+          controls: div.querySelector('.screen-controls'),
+          btnPlay: div.querySelector('.btn-play'),
+          btnRw: div.querySelector('.btn-rw'),
+          btnFf: div.querySelector('.btn-ff'),
+          btnSwitch: div.querySelector('.btn-switch'),
+          btnSpeed: div.querySelector('.btn-speed'),
+          btnFit: div.querySelector('.btn-fit'),
+          progBar: div.querySelector('.prog-bar'),
+          timeCur: div.querySelector('.time-cur'),
+          timeDur: div.querySelector('.time-dur'),
+          speedVal: 1.0, isCover: false, hideTimer: null,
+          file: null, url: null
+        };
+        players.push(player);
+
+        const showControls = () => {
+          if(isLocked) return;
+          player.controls.classList.add('active');
+          clearTimeout(player.hideTimer);
+          player.hideTimer = setTimeout(() => {
+            player.controls.classList.remove('active');
+          }, 5000);
+        };
+
+        player.tapLayer.addEventListener('click', () => {
+          if(isLocked) return;
+          if(!player.file) openQuickPicker(i);
+          else showControls();
+        });
+
+        player.controls.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showControls();
+        });
+
+        player.btnPlay.addEventListener('click', () => {
+          if(player.video.paused) player.video.play(); else player.video.pause();
+          player.btnPlay.textContent = player.video.paused ? '▶' : '⏸';
+          updateGlobalIcons();
+        });
+
+        player.btnRw.addEventListener('click', () => player.video.currentTime = Math.max(0, player.video.currentTime - 10));
+        player.btnFf.addEventListener('click', () => player.video.currentTime = Math.min(player.video.duration, player.video.currentTime + 10));
+        player.btnSwitch.addEventListener('click', () => openQuickPicker(i));
+        
+        player.btnFit.addEventListener('click', () => {
+          player.isCover = !player.isCover;
+          player.video.style.objectFit = player.isCover ? 'cover' : 'contain';
+          player.btnFit.innerHTML = player.isCover ? '🗖 填充' : '⛶ 适配';
+        });
+
+        player.btnSpeed.addEventListener('click', () => {
+          const speeds = [1.0, 1.25, 1.5, 2.0];
+          player.speedVal = speeds[(speeds.indexOf(player.speedVal) + 1) % speeds.length];
+          player.video.playbackRate = player.speedVal;
+          player.btnSpeed.innerHTML = `${player.speedVal}x`;
+        });
+
+        player.video.addEventListener('timeupdate', () => {
+          if(!player.video.duration) return;
+          player.timeCur.textContent = formatTime(player.video.currentTime);
+          player.timeDur.textContent = formatTime(player.video.duration);
+          player.progBar.value = (player.video.currentTime / player.video.duration) * 100;
+        });
+
+        player.progBar.addEventListener('input', e => {
+          if(player.video.duration) player.video.currentTime = (e.target.value / 100) * player.video.duration;
+        });
       }
-    }, { passive: false });
-
-    function showToast(message) {
-      toast.textContent = message;
-      toast.style.display = 'block';
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.style.display = 'none';
-      }, 1700);
     }
 
-    function formatSize(bytes) {
-      if (!bytes && bytes !== 0) return '-';
-      const units = ['B', 'KB', 'MB', 'GB'];
-      let size = bytes;
-      let idx = 0;
-      while (size >= 1024 && idx < units.length - 1) {
-        size /= 1024;
-        idx++;
+    // --- 高阶锁屏逻辑 (点击屏幕才显示遮罩，非按钮点击反复切换遮罩) ---
+    document.getElementById('tbLock').addEventListener('click', () => {
+      isLocked = true;
+      UI.app.classList.add('is-locked'); // 锁定后彻底隐藏悬浮工具栏
+      updateGlobalIcons();
+      showToast('界面已锁定');
+      players.forEach(p => p.controls.classList.remove('active'));
+    });
+
+    // 捕获全局点击事件处理锁屏后的交互
+    document.addEventListener('click', (e) => {
+      if (!isLocked) return;
+      
+      // 如果点击的是解锁大按钮
+      if (e.target.closest('#btnUnlock')) {
+        isLocked = false;
+        UI.app.classList.remove('is-locked');
+        UI.lockMask.classList.remove('show');
+        updateGlobalIcons();
+        showToast('已解锁');
+        e.stopPropagation();
+        e.preventDefault();
+        return;
       }
-      return `${size.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
-    }
+      
+      // 点击其他任何地方，反复显示/隐藏解锁遮罩
+      if (e.target.closest('.play-page') || e.target.closest('#lockMask')) {
+        UI.lockMask.classList.toggle('show');
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }, true);
 
-    function formatTime(seconds) {
-      if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = Math.floor(seconds % 60);
-      if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    function shortName(name) {
-      if (!name) return '';
-      return name.length > 18 ? name.slice(0, 8) + '…' + name.slice(-7) : name;
-    }
-
-    function createId(prefix) {
-      return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    }
-
-    function anyPlaying() {
-      return players.some(player => player.file && !player.video.paused && !player.video.ended);
-    }
+    // --- 全局工具栏两步唤醒逻辑 (在捕获阶段拦截) ---
+    UI.globalToolbar.addEventListener('click', (e) => {
+      if(isLocked) return;
+      
+      if (!UI.globalToolbar.classList.contains('is-awake')) {
+        // 第一步：如果是淡化状态，只唤醒，不触发子元素的点击事件
+        UI.globalToolbar.classList.add('is-awake');
+        clearTimeout(toolbarTimer);
+        toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      // 第二步：已经是唤醒状态，允许点击按钮，同时重置计时器
+      clearTimeout(toolbarTimer);
+      toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
+    }, true);
 
     function updateGlobalIcons() {
-      globalPlayIcon.textContent = anyPlaying() ? '⏸' : '▶';
-      globalMuteIcon.textContent = globalMuted ? '🔇' : '🔊';
-      lockBtn.textContent = isLocked ? '🔒' : '🔓';
+      const anyPlaying = players.some(p => p.file && !p.video.paused);
+      document.getElementById('iconPlayAll').textContent = anyPlaying ? '⏸' : '▶';
+      document.getElementById('tbPlayAll').querySelector('.tb-text').textContent = anyPlaying ? '全部暂停' : '全部播放';
+      document.getElementById('iconMuteAll').textContent = globalMuted ? '🔇' : '🔊';
+      document.getElementById('tbMuteAll').querySelector('.tb-text').textContent = globalMuted ? '全部开声' : '全部静音';
+      document.getElementById('iconLock').textContent = isLocked ? '🔒' : '🔓';
     }
 
-    function wakeToolbar(autoHide = true) {
-      if (isLocked) return;
-      globalToolbar.classList.remove('is-idle');
-      globalToolbar.classList.add('is-awake');
-      clearTimeout(toolbarTimer);
-
-      if (autoHide) {
-        toolbarTimer = setTimeout(() => {
-          sleepToolbar();
-        }, 1800);
-      }
-    }
-
-    function sleepToolbar() {
-      globalToolbar.classList.remove('is-awake');
-      globalToolbar.classList.add('is-idle');
-    }
-
-    function showLockOverlay() {
-      lockOverlay.classList.add('show');
-    }
-
-    function hideLockOverlay() {
-      lockOverlay.classList.remove('show');
-    }
-
-    function setLocked(locked) {
-      isLocked = locked;
-      app.classList.toggle('is-locked', locked);
-      hideLockOverlay();
+    document.getElementById('tbPlayAll').addEventListener('click', () => {
+      const anyPlaying = players.some(p => p.file && !p.video.paused);
+      players.forEach(p => {
+        if(p.file) {
+          if(anyPlaying) p.video.pause(); else { p.video.muted = globalMuted; p.video.play(); }
+          p.btnPlay.textContent = p.video.paused ? '▶' : '⏸';
+        }
+      });
       updateGlobalIcons();
+    });
 
-      if (locked) {
-        clearTimeout(toolbarTimer);
-        showToast('已锁定，点击屏幕显示解锁');
-      } else {
-        showToast('已解锁');
-        wakeToolbar(true);
-      }
-    }
+    document.getElementById('tbMuteAll').addEventListener('click', () => {
+      globalMuted = !globalMuted;
+      players.forEach(p => { if(p.file) p.video.muted = globalMuted; });
+      updateGlobalIcons();
+    });
 
-    function switchPage(page, pickScreen = null) {
-      if (isLocked) {
-        showLockOverlay();
-        return;
-      }
-
-      const isPlay = page === 'play';
-      playPage.classList.toggle('active', isPlay);
-      libraryPage.classList.toggle('active', !isPlay);
-      tabPlay.classList.toggle('active', isPlay);
-      tabLibrary.classList.toggle('active', !isPlay);
-
-      if (!isPlay) {
-        app.classList.remove('tab-collapsed');
-        pendingPickScreen = pickScreen;
-        libraryTitle.textContent = pickScreen === null ? '视频文件管理' : `选择视频到屏幕 ${pickScreen + 1}`;
-        refreshLibrary();
-      } else {
-        pendingPickScreen = null;
-        libraryTitle.textContent = '视频文件管理';
-        wakeToolbar(true);
-      }
-    }
-
-    function toggleTabCollapsed() {
-      if (isLocked) {
-        showLockOverlay();
-        return;
-      }
-      app.classList.toggle('tab-collapsed');
-      wakeToolbar(true);
-    }
-
-    function forceInlineVideo(video) {
-      video.controls = false;
-      video.autoplay = false;
-      video.playsInline = true;
-      video.defaultMuted = globalMuted;
-      video.muted = globalMuted;
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.setAttribute('x5-playsinline', '');
-      video.setAttribute('x5-video-player-type', 'h5-page');
-      video.setAttribute('x5-video-player-fullscreen', 'false');
-      video.setAttribute('disablePictureInPicture', '');
-      video.setAttribute('controlsList', 'nofullscreen nodownload noremoteplayback');
-      video.removeAttribute('controls');
-    }
-
-    function openDb() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = event => {
-          const database = event.target.result;
-          if (!database.objectStoreNames.contains('folders')) {
-            database.createObjectStore('folders', { keyPath: 'id' });
-          }
-          if (!database.objectStoreNames.contains('videos')) {
-            const store = database.createObjectStore('videos', { keyPath: 'id' });
-            store.createIndex('folderId', 'folderId', { unique: false });
-            store.createIndex('createdAt', 'createdAt', { unique: false });
-          }
-        };
-
-        request.onsuccess = async () => {
-          db = request.result;
-          await ensureDefaultFolder();
-          resolve(db);
-        };
-
-        request.onerror = () => reject(request.error);
+    document.getElementById('tbClear').addEventListener('click', () => {
+      players.forEach(p => {
+        p.video.pause(); p.file = null;
+        if(p.url) URL.revokeObjectURL(p.url);
+        p.video.removeAttribute('src'); p.video.load();
+        p.placeholder.style.display = 'flex';
+        p.controls.classList.remove('active');
       });
+      updateGlobalIcons(); showToast('已清空全部屏幕');
+    });
+
+    // --- 底部导航/收起优化 ---
+    UI.collapseHandle.addEventListener('click', () => {
+      UI.app.classList.toggle('tab-collapsed');
+    });
+
+    // --- 切换Tab时隐藏/显示手柄 ---
+    UI.tabPlay.addEventListener('click', () => {
+      UI.playPage.classList.add('active'); UI.libPage.classList.remove('active');
+      UI.tabPlay.classList.add('active'); UI.tabLib.classList.remove('active');
+      UI.collapseHandle.style.opacity = '1';
+      UI.collapseHandle.style.pointerEvents = 'auto';
+    });
+    UI.tabLib.addEventListener('click', () => {
+      UI.playPage.classList.remove('active'); UI.libPage.classList.add('active');
+      UI.tabPlay.classList.remove('active'); UI.tabLib.classList.add('active');
+      UI.collapseHandle.style.opacity = '0';
+      UI.collapseHandle.style.pointerEvents = 'none';
+      loadData();
+    });
+
+    // --- 快速选片 ---
+    function openQuickPicker(index) {
+      pendingScreenIndex = index;
+      UI.qsTargetScreen.textContent = `屏幕 ${index + 1}`;
+      UI.qsOverlay.classList.add('show');
+      renderQuickPickerList();
     }
+    UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
 
-    function tx(storeNames, mode = 'readonly') {
-      return db.transaction(storeNames, mode);
-    }
-
-    function idbRequest(request) {
-      return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    }
-
-    async function ensureDefaultFolder() {
-      const store = tx(['folders'], 'readwrite').objectStore('folders');
-      const existing = await idbRequest(store.get(DEFAULT_FOLDER_ID));
-      if (!existing) {
-        await idbRequest(store.put({ id: DEFAULT_FOLDER_ID, name: '默认文件夹', color: 'blue', createdAt: Date.now() }));
-      }
-    }
-
-    async function getFolders() {
-      const list = await idbRequest(tx(['folders']).objectStore('folders').getAll());
-      return list.sort((a, b) => a.createdAt - b.createdAt);
-    }
-
-    async function getAllVideos() {
-      return await idbRequest(tx(['videos']).objectStore('videos').getAll());
-    }
-
-    async function getVideosByFolder(folderId) {
-      const index = tx(['videos']).objectStore('videos').index('folderId');
-      const list = await idbRequest(index.getAll(folderId));
-      return list.sort((a, b) => b.createdAt - a.createdAt);
-    }
-
-    async function getVideoRecord(videoId) {
-      return await idbRequest(tx(['videos']).objectStore('videos').get(videoId));
-    }
-
-    async function addFolder() {
-      const name = prompt('请输入文件夹名称');
-      if (!name || !name.trim()) return;
-
-      const colors = ['blue', 'green', 'purple', 'orange'];
-      const folder = {
-        id: createId('folder'),
-        name: name.trim(),
-        color: colors[Math.floor(Math.random() * colors.length)],
-        createdAt: Date.now()
-      };
-
-      await idbRequest(tx(['folders'], 'readwrite').objectStore('folders').put(folder));
-      currentFolderId = folder.id;
-      await refreshLibrary();
-      showToast('文件夹已创建');
-    }
-
-    async function addVideos(files) {
-      const validFiles = Array.from(files || []).filter(file => file.type.startsWith('video/'));
-      if (!validFiles.length) {
-        showToast('没有可添加的视频文件');
-        return;
-      }
-
-      const store = tx(['videos'], 'readwrite').objectStore('videos');
-      let idx = 0;
-
-      for (const file of validFiles) {
-        const record = {
-          id: createId('video'),
-          folderId: currentFolderId,
-          name: file.name,
-          type: file.type || 'video/mp4',
-          size: file.size,
-          duration: 0,
-          createdAt: Date.now() + idx,
-          blob: file
-        };
-        await idbRequest(store.put(record));
-        idx++;
-      }
-
-      await refreshLibrary();
-      showToast(`已添加 ${validFiles.length} 个视频`);
-    }
-
-    async function deleteVideo(videoId) {
-      await idbRequest(tx(['videos'], 'readwrite').objectStore('videos').delete(videoId));
-      await refreshLibrary();
-      showToast('视频已删除');
-    }
-
-    async function refreshLibrary() {
-      if (!db) return;
-      folders = await getFolders();
-      if (!folders.some(folder => folder.id === currentFolderId)) currentFolderId = DEFAULT_FOLDER_ID;
-      currentVideos = await getVideosByFolder(currentFolderId);
-      await renderFolders();
-      renderVideos();
-    }
-
-    function folderEmoji(color) {
-      if (color === 'green') return '🟩';
-      if (color === 'purple') return '🟪';
-      if (color === 'orange') return '🟧';
-      return '🟦';
-    }
-
-    async function renderFolders() {
-      const videos = await getAllVideos();
-      const counts = {};
-      videos.forEach(video => {
-        counts[video.folderId] = (counts[video.folderId] || 0) + 1;
-      });
-
-      folderStrip.innerHTML = '';
-
-      folders.forEach(folder => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = `folder-card ${folder.id === currentFolderId ? 'active' : ''}`;
-        card.innerHTML = `
-          <div class="folder-icon">${folderEmoji(folder.color)}</div>
-          <div class="folder-name">${folder.name}</div>
-          <div class="folder-count">${counts[folder.id] || 0} 个视频</div>
-        `;
-        card.addEventListener('click', async () => {
-          currentFolderId = folder.id;
-          currentVideos = await getVideosByFolder(currentFolderId);
-          await renderFolders();
-          renderVideos();
-        });
-        folderStrip.appendChild(card);
-      });
-    }
-
-    function renderVideos() {
-      const folder = folders.find(item => item.id === currentFolderId);
-      folderCurrent.textContent = `${folder ? folder.name : '默认文件夹'} · ${currentVideos.length} 个视频`;
-      videoList.innerHTML = '';
-
-      if (!currentVideos.length) {
-        videoList.innerHTML = `
-          <div class="empty-list">
-            当前文件夹暂无视频。<br>
-            点击“添加视频”，从手机文件中选择视频加入当前文件夹。
-          </div>
-        `;
-        return;
-      }
-
-      currentVideos.forEach(video => {
+    async function renderQuickPickerList() {
+      const videos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
+      videos.sort((a,b)=>b.createdAt - a.createdAt);
+      UI.qsVideoList.innerHTML = videos.length ? '' : '<div style="color:#64748b; padding:20px; font-size:13px;">暂无视频，请去视频库添加</div>';
+      videos.forEach(v => {
         const item = document.createElement('div');
-        item.className = 'video-item';
-        const actionText = pendingPickScreen === null ? '选择到屏幕' : '使用';
+        item.className = 'qs-item';
+        item.innerHTML = `<div class="qs-thumb"><span style="font-size:24px;">🎬</span></div><div class="qs-name">${v.name}</div>`;
+        item.addEventListener('click', () => {
+          const p = players[pendingScreenIndex];
+          p.file = v.blob;
+          if(p.url) URL.revokeObjectURL(p.url);
+          p.url = URL.createObjectURL(p.file);
+          p.video.src = p.url;
+          p.video.muted = globalMuted;
+          p.video.play().catch(()=>{});
+          p.placeholder.style.display = 'none';
+          p.controls.classList.add('active'); 
+          clearTimeout(p.hideTimer);
+          p.hideTimer = setTimeout(()=> p.controls.classList.remove('active'), 5000);
+          p.btnPlay.textContent = '⏸';
+          UI.qsOverlay.classList.remove('show');
+          updateGlobalIcons();
+        });
+        UI.qsVideoList.appendChild(item);
+      });
+    }
 
-        item.innerHTML = `
-          <div class="thumb">
-            🎬
-            <span class="thumb-duration">${video.duration ? formatTime(video.duration) : '--:--'}</span>
-          </div>
+    // --- 视频库渲染 ---
+    async function renderLibrary() {
+      // 获取所有视频用于统计文件夹数量
+      const allVideos = await new Promise(r => { const req = db.transaction('videos').objectStore('videos').getAll(); req.onsuccess=()=>r(req.result); });
+      const counts = {};
+      allVideos.forEach(v => { counts[v.folderId] = (counts[v.folderId] || 0) + 1; });
+
+      UI.folderStrip.innerHTML = '';
+      folders.forEach(f => {
+        const el = document.createElement('div');
+        el.className = `folder-card ${f.id === currentFolderId ? 'active' : ''}`;
+        el.innerHTML = `<div class="folder-icon">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${counts[f.id] || 0} 个视频</div>`;
+        el.addEventListener('click', () => { currentFolderId = f.id; loadData(); });
+        UI.folderStrip.appendChild(el);
+      });
+
+      const currentFolder = folders.find(f => f.id === currentFolderId) || {name: '默认文件夹'};
+      UI.libVideoTitle.textContent = `${currentFolder.name} · ${currentVideos.length} 个视频`;
+      UI.libVideoList.innerHTML = currentVideos.length ? '' : '<div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">当前文件夹为空</div>';
+      
+      currentVideos.forEach(v => {
+        const el = document.createElement('div');
+        el.className = 'video-item';
+        el.innerHTML = `
+          <div class="thumb">🎬</div>
           <div class="video-main">
-            <div class="video-name">${video.name}</div>
-            <div class="video-meta">${video.duration ? formatTime(video.duration) : '未知时长'} · ${formatSize(video.size)}</div>
+            <div class="video-name">${v.name}</div>
+            <div class="video-meta">${(v.blob.size / 1024 / 1024).toFixed(1)} MB · ${new Date(v.createdAt).toLocaleDateString()}</div>
             <div class="video-actions">
-              <button class="select-btn" type="button" data-action="select">▣ ${actionText}</button>
-              <button class="delete-btn" type="button" data-action="delete">🗑 删除</button>
+              <button class="delete-btn">🗑 删除</button>
             </div>
           </div>
         `;
-
-        item.querySelector('[data-action="select"]').addEventListener('click', async () => {
-          if (pendingPickScreen !== null) {
-            await loadLibraryVideoToPlayer(pendingPickScreen, video.id);
-            switchPage('play');
-          } else {
-            pendingChooseVideoId = video.id;
-            targetSheet.classList.add('show');
+        el.querySelector('.delete-btn').addEventListener('click', () => {
+          if(confirm(`确定删除「${v.name}」吗？`)) {
+            db.transaction('videos', 'readwrite').objectStore('videos').delete(v.id).onsuccess = () => { showToast('已删除'); loadData(); };
           }
         });
-
-        item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
-          if (confirm(`确定删除「${video.name}」吗？`)) await deleteVideo(video.id);
-        });
-
-        videoList.appendChild(item);
+        UI.libVideoList.appendChild(el);
       });
     }
 
-    function createPlayer(index) {
-      const card = document.createElement('section');
-      card.className = 'screen-card';
-      card.innerHTML = `
-        <div class="video-layer">
-          <video muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" x5-video-player-fullscreen="false" preload="metadata" disablePictureInPicture controlsList="nofullscreen nodownload noremoteplayback"></video>
-        </div>
-        <div class="tap-layer"></div>
-        <div class="screen-fade-top"></div>
-        <div class="screen-label">屏幕${index + 1}</div>
-        <div class="screen-placeholder">
-          <div class="placeholder-number">${index + 1}</div>
-          <div class="placeholder-text">点右下角 ＋<br>从视频库选择</div>
-        </div>
-        <div class="big-play hidden"><div class="big-play-icon">▶</div></div>
-        <div class="quick-controls">
-          <div class="quick-panel">
-            <div class="quick-buttons">
-              <button class="quick-btn" data-role="back" type="button">⏪</button>
-              <button class="quick-btn" data-role="middle" type="button">⏸</button>
-              <button class="quick-btn" data-role="forward" type="button">⏩</button>
-            </div>
-            <div class="progress-row">
-              <span data-role="current">00:00</span>
-              <input data-role="progress" type="range" min="0" max="0" value="0" step="0.1" />
-              <span data-role="duration">00:00</span>
-            </div>
-          </div>
-        </div>
-        <div class="screen-status">未选择</div>
-        <div class="screen-actions">
-          <button class="mini-btn" data-role="pick" type="button">＋</button>
-          <button class="mini-btn" data-role="play" type="button">▶</button>
-          <button class="mini-btn" data-role="mute" type="button">🔈</button>
-          <button class="mini-btn" data-role="fit" type="button">⛶</button>
-        </div>
-      `;
+    document.getElementById('btnNewFolder').addEventListener('click', () => {
+      const name = prompt('文件夹名称');
+      if(name && name.trim()) {
+        db.transaction('folders', 'readwrite').objectStore('folders').put({ id: 'f_'+Date.now(), name: name.trim(), createdAt: Date.now() });
+        loadData();
+      }
+    });
 
-      playerGrid.appendChild(card);
-
-      const player = {
-        index,
-        card,
-        video: card.querySelector('video'),
-        tapLayer: card.querySelector('.tap-layer'),
-        label: card.querySelector('.screen-label'),
-        placeholder: card.querySelector('.screen-placeholder'),
-        bigPlay: card.querySelector('.big-play'),
-        quick: card.querySelector('.quick-controls'),
-        status: card.querySelector('.screen-status'),
-        pickBtn: card.querySelector('[data-role="pick"]'),
-        playBtn: card.querySelector('[data-role="play"]'),
-        muteBtn: card.querySelector('[data-role="mute"]'),
-        fitBtn: card.querySelector('[data-role="fit"]'),
-        backBtn: card.querySelector('[data-role="back"]'),
-        middleBtn: card.querySelector('[data-role="middle"]'),
-        forwardBtn: card.querySelector('[data-role="forward"]'),
-        currentLabel: card.querySelector('[data-role="current"]'),
-        durationLabel: card.querySelector('[data-role="duration"]'),
-        progress: card.querySelector('[data-role="progress"]'),
-        objectUrl: null,
-        file: null,
-        quickTimer: null,
-        isScrubbing: false
+    document.getElementById('fileInput').addEventListener('change', e => {
+      const files = Array.from(e.target.files);
+      if(!files.length) return;
+      const tx = db.transaction('videos', 'readwrite');
+      const store = tx.objectStore('videos');
+      files.forEach((f, idx) => store.put({ id: 'v_'+Date.now()+'_'+idx, folderId: currentFolderId, name: f.name, blob: f, createdAt: Date.now() + idx }));
+      tx.oncomplete = () => { 
+        e.target.value = ''; 
+        loadData(); 
+        showToast('上传成功'); 
       };
-
-      forceInlineVideo(player.video);
-
-      player.pickBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        switchPage('library', index);
-      });
-
-      player.playBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        togglePlay(index);
-      });
-
-      player.tapLayer.addEventListener('pointerup', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        handleCellTap(index);
-      });
-
-      player.muteBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        toggleMute(index);
-      });
-
-      player.fitBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        player.card.classList.toggle('cover');
-        showToast(`屏幕${index + 1}：${player.card.classList.contains('cover') ? '填充画面' : '完整显示'}`);
-      });
-
-      player.backBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        seekBy(index, -10);
-      });
-
-      player.forwardBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        seekBy(index, 10);
-      });
-
-      player.middleBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        togglePlay(index);
-      });
-
-      player.progress.addEventListener('pointerdown', event => {
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        player.isScrubbing = true;
-        showQuickControls(index);
-      });
-
-      player.progress.addEventListener('input', event => {
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        const value = Number(player.progress.value);
-        if (Number.isFinite(player.video.duration) && Number.isFinite(value)) {
-          player.video.currentTime = value;
-          updateProgress(index);
-        }
-        showQuickControls(index);
-      });
-
-      player.progress.addEventListener('change', event => {
-        event.stopPropagation();
-        if (isLocked) return showLockOverlay();
-        player.isScrubbing = false;
-        showQuickControls(index);
-      });
-
-      player.video.addEventListener('loadedmetadata', () => updateProgress(index));
-      player.video.addEventListener('timeupdate', () => updateProgress(index));
-
-      player.video.addEventListener('webkitbeginfullscreen', () => {
-        try {
-          player.video.pause();
-          if (player.video.webkitExitFullscreen) player.video.webkitExitFullscreen();
-          showToast('已阻止全屏，请使用页面按钮播放');
-        } catch (e) {}
-      });
-
-      player.video.addEventListener('play', () => {
-        player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
-        player.playBtn.textContent = '⏸';
-        player.middleBtn.textContent = '⏸';
-        player.bigPlay.classList.add('hidden');
-        updateGlobalIcons();
-      });
-
-      player.video.addEventListener('pause', () => {
-        if (!player.file) return;
-        player.status.textContent = '已暂停';
-        player.playBtn.textContent = '▶';
-        player.middleBtn.textContent = '▶';
-        player.bigPlay.classList.remove('hidden');
-        updateGlobalIcons();
-      });
-
-      player.video.addEventListener('ended', () => {
-        player.status.textContent = '播放结束';
-        player.playBtn.textContent = '▶';
-        player.middleBtn.textContent = '▶';
-        player.bigPlay.classList.remove('hidden');
-        hideQuickControls(index);
-        updateGlobalIcons();
-      });
-
-      players.push(player);
-    }
-
-    function updateProgress(index) {
-      const player = players[index];
-      const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
-      const current = Number.isFinite(player.video.currentTime) ? player.video.currentTime : 0;
-
-      player.progress.max = duration || 0;
-      if (!player.isScrubbing) player.progress.value = current || 0;
-      player.currentLabel.textContent = formatTime(current);
-      player.durationLabel.textContent = formatTime(duration);
-    }
-
-    function handleCellTap(index) {
-      const player = players[index];
-      if (!player.file) {
-        switchPage('library', index);
-        return;
-      }
-
-      if (!player.video.paused && !player.video.ended) {
-        showQuickControls(index);
-      } else {
-        togglePlay(index);
-      }
-    }
-
-    function showQuickControls(index) {
-      const player = players[index];
-      if (!player || !player.file) return;
-      updateProgress(index);
-      player.quick.classList.add('show');
-      clearTimeout(player.quickTimer);
-      player.quickTimer = setTimeout(() => hideQuickControls(index), 3600);
-    }
-
-    function hideQuickControls(index) {
-      const player = players[index];
-      if (!player) return;
-      player.quick.classList.remove('show');
-      clearTimeout(player.quickTimer);
-    }
-
-    function seekBy(index, seconds) {
-      const player = players[index];
-      const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
-      const next = Math.max(0, Math.min(duration, player.video.currentTime + seconds));
-      player.video.currentTime = next;
-      updateProgress(index);
-      showQuickControls(index);
-    }
-
-    function loadFile(index, file) {
-      const player = players[index];
-      if (!player) return;
-
-      if (player.objectUrl) URL.revokeObjectURL(player.objectUrl);
-
-      forceInlineVideo(player.video);
-
-      const url = URL.createObjectURL(file);
-      player.objectUrl = url;
-      player.file = file;
-      player.video.src = url;
-      player.video.load();
-
-      player.label.textContent = shortName(file.name);
-      player.status.textContent = '已从视频库载入';
-      player.placeholder.style.display = 'none';
-      player.bigPlay.classList.remove('hidden');
-      player.playBtn.textContent = '▶';
-      player.middleBtn.textContent = '▶';
-      player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
-      player.progress.value = 0;
-      player.progress.max = 0;
-      player.currentLabel.textContent = '00:00';
-      player.durationLabel.textContent = '00:00';
-      hideQuickControls(index);
-      updateGlobalIcons();
-
-      showToast(`屏幕${index + 1} 已载入视频`);
-    }
-
-    async function loadLibraryVideoToPlayer(index, videoId) {
-      const record = await getVideoRecord(videoId);
-      if (!record) {
-        showToast('视频不存在或已删除');
-        return;
-      }
-      const file = new File([record.blob], record.name, { type: record.type || 'video/mp4' });
-      loadFile(index, file);
-    }
-
-    function togglePlay(index) {
-      const player = players[index];
-      if (!player.file) {
-        switchPage('library', index);
-        return;
-      }
-
-      forceInlineVideo(player.video);
-      player.video.muted = globalMuted ? true : player.video.muted;
-
-      if (player.video.paused || player.video.ended) {
-        const promise = player.video.play();
-        if (promise && typeof promise.catch === 'function') {
-          promise.catch(() => {
-            player.status.textContent = '需再次点击播放';
-            showToast('iPhone 阻止播放，请再点一次当前窗口的 ▶');
-          });
-        }
-      } else {
-        player.video.pause();
-      }
-      wakeToolbar(true);
-      updateGlobalIcons();
-    }
-
-    function toggleMute(index) {
-      const player = players[index];
-      player.video.muted = !player.video.muted;
-      player.video.defaultMuted = player.video.muted;
-      player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
-      if (player.file && !player.video.paused) {
-        player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
-      }
-      showToast(`屏幕${index + 1}：${player.video.muted ? '已静音' : '已开声'}`);
-    }
-
-    function playAll() {
-      let count = 0;
-      players.forEach(player => {
-        if (!player.file) return;
-        count++;
-        forceInlineVideo(player.video);
-        player.video.muted = globalMuted ? true : player.video.muted;
-        const promise = player.video.play();
-        if (promise && typeof promise.catch === 'function') {
-          promise.catch(() => {
-            player.status.textContent = '需手动播放';
-          });
-        }
-      });
-      showToast(count ? '已尝试播放全部屏幕' : '请先选择视频');
-      updateGlobalIcons();
-    }
-
-    function pauseAll() {
-      players.forEach(player => {
-        if (player.file) player.video.pause();
-      });
-      showToast('已暂停全部屏幕');
-      updateGlobalIcons();
-    }
-
-    function toggleGlobalPlayPause() {
-      if (isLocked) return showLockOverlay();
-      if (anyPlaying()) {
-        pauseAll();
-      } else {
-        playAll();
-      }
-      wakeToolbar(true);
-    }
-
-    function setMuteAll(muted) {
-      globalMuted = muted;
-      players.forEach(player => {
-        player.video.muted = muted;
-        player.video.defaultMuted = muted;
-        player.muteBtn.textContent = muted ? '🔈' : '🔇';
-        if (player.file && !player.video.paused) {
-          player.status.textContent = muted ? '播放中 · 静音' : '播放中';
-        }
-      });
-      showToast(muted ? '已全部静音' : '已全部开声');
-      updateGlobalIcons();
-    }
-
-    function toggleGlobalMute() {
-      if (isLocked) return showLockOverlay();
-      setMuteAll(!globalMuted);
-      wakeToolbar(true);
-    }
-
-    function clearAll() {
-      players.forEach(player => {
-        player.video.pause();
-        if (player.objectUrl) URL.revokeObjectURL(player.objectUrl);
-        player.objectUrl = null;
-        player.file = null;
-        player.video.removeAttribute('src');
-        player.video.load();
-        forceInlineVideo(player.video);
-        player.label.textContent = `屏幕${player.index + 1}`;
-        player.status.textContent = '未选择';
-        player.placeholder.style.display = 'flex';
-        player.bigPlay.classList.add('hidden');
-        player.playBtn.textContent = '▶';
-        player.middleBtn.textContent = '▶';
-        player.muteBtn.textContent = globalMuted ? '🔈' : '🔇';
-        player.progress.value = 0;
-        player.progress.max = 0;
-        player.currentLabel.textContent = '00:00';
-        player.durationLabel.textContent = '00:00';
-        hideQuickControls(player.index);
-      });
-      showToast('已清空全部屏幕');
-      updateGlobalIcons();
-    }
-
-    tabPlay.addEventListener('click', () => switchPage('play'));
-    tabLibrary.addEventListener('click', () => switchPage('library'));
-
-    tabToggleBtn.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleTabCollapsed();
     });
 
-    globalToolbar.addEventListener('mouseenter', () => {
-      if (isLocked) return;
-      wakeToolbar(false);
-    });
-
-    globalToolbar.addEventListener('mouseleave', () => {
-      if (isLocked) return;
-      sleepToolbar();
-    });
-
-    globalToolbar.addEventListener('pointerdown', () => {
-      if (isLocked) return;
-      wakeToolbar(true);
-    });
-
-    togglePlayAllBtn.addEventListener('click', event => {
-      event.stopPropagation();
-      toggleGlobalPlayPause();
-    });
-
-    toggleMuteAllBtn.addEventListener('click', event => {
-      event.stopPropagation();
-      toggleGlobalMute();
-    });
-
-    clearBtn.addEventListener('click', event => {
-      event.stopPropagation();
-      if (isLocked) return showLockOverlay();
-      wakeToolbar(true);
-      clearAll();
-    });
-
-    lockBtn.addEventListener('click', event => {
-      event.stopPropagation();
-      if (isLocked) return showLockOverlay();
-      setLocked(true);
-    });
-
-    unlockBtn.addEventListener('click', event => {
-      event.stopPropagation();
-      setLocked(false);
-    });
-
-    lockOverlay.addEventListener('click', event => {
-      if (event.target === lockOverlay) hideLockOverlay();
-    });
-
-    newFolderBtn.addEventListener('click', addFolder);
-
-    libraryAddInput.addEventListener('change', async event => {
-      await addVideos(event.target.files);
-      libraryAddInput.value = '';
-    });
-
-    targetSheet.addEventListener('click', event => {
-      if (event.target === targetSheet) targetSheet.classList.remove('show');
-    });
-
-    targetCancelBtn.addEventListener('click', () => {
-      targetSheet.classList.remove('show');
-      pendingChooseVideoId = null;
-    });
-
-    targetSheet.querySelectorAll('[data-screen]').forEach(button => {
-      button.addEventListener('click', async () => {
-        const screen = Number(button.dataset.screen);
-        if (pendingChooseVideoId) {
-          await loadLibraryVideoToPlayer(screen, pendingChooseVideoId);
-          targetSheet.classList.remove('show');
-          pendingChooseVideoId = null;
-          switchPage('play');
-        }
-      });
-    });
-
-    document.addEventListener('pointerdown', event => {
-      if (!isLocked) return;
-      const insideUnlock = event.target.closest('#unlockBtn');
-      if (!insideUnlock) showLockOverlay();
-    });
-
-    async function init() {
-      for (let i = 0; i < 4; i++) createPlayer(i);
-      try {
-        await openDb();
-        await refreshLibrary();
-      } catch (error) {
-        console.error(error);
-        showToast('视频库初始化失败，请检查浏览器权限');
-      }
-      updateGlobalIcons();
-      sleepToolbar();
-    }
-
-    init();
+    initDB().then(() => { initPlayers(); loadData(); });
   </script>
 </body>
 </html>
