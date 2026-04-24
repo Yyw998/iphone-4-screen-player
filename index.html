@@ -3,25 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="四屏视频" />
+  <meta name="theme-color" content="#050816" />
   <title>iPhone 四屏本地视频播放器</title>
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050816;
-      color: #f9fafb;
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #050816; color: #f9fafb;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-      touch-action: manipulation;
-      overscroll-behavior: none;
+      touch-action: manipulation; overscroll-behavior: none;
     }
 
     body {
@@ -32,593 +27,231 @@
     }
 
     .app {
-      width: 100vw;
-      height: 100dvh;
-      max-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #050816;
+      width: 100vw; height: 100dvh; max-height: 100dvh;
+      display: flex; flex-direction: column; overflow: hidden; background: #050816;
     }
 
     .topbar {
-      flex: 0 0 auto;
-      height: 48px;
-      padding: 6px 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #0b1020;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex: 0 0 auto; height: 48px; padding: 6px 8px;
+      display: flex; align-items: center; gap: 6px;
+      background: #0b1020; border-bottom: 1px solid rgba(255,255,255,.08);
     }
 
-    .brand {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.15;
+    .brand { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+    .brand-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-subtitle { margin-top: 2px; font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toolbar { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; }
+
+    button, .file-btn {
+      height: 32px; border: 0; border-radius: 9px; padding: 0 9px;
+      background: #2563eb; color: #fff; font-size: 12px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      white-space: nowrap; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
     }
 
-    .brand-title {
-      font-size: 14px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .brand-subtitle {
-      margin-top: 2px;
-      font-size: 10px;
-      color: #9ca3af;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .toolbar {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    button,
-    .file-btn {
-      height: 32px;
-      border: 0;
-      border-radius: 9px;
-      padding: 0 9px;
-      background: #2563eb;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    button:active,
-    .file-btn:active {
-      transform: scale(0.97);
-      opacity: 0.86;
-    }
-
-    button.secondary {
-      background: #1f2937;
-    }
-
-    button.danger {
-      background: #991b1b;
-    }
-
-    button.ghost {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    input[type="file"] {
-      display: none;
-    }
+    button:active, .file-btn:active { transform: scale(.97); opacity: .86; }
+    button.secondary { background: #1f2937; }
+    button.danger { background: #991b1b; }
+    button.ghost { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); }
+    input[type="file"] { display: none; }
 
     .grid {
-      flex: 1 1 auto;
-      min-height: 0;
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      flex: 1 1 auto; min-height: 0; width: 100%;
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
       grid-template-rows: repeat(2, minmax(0, 1fr));
-      gap: 6px;
-      padding: 6px;
-      overflow: hidden;
+      gap: 6px; padding: 6px; overflow: hidden;
     }
 
     .cell {
-      position: relative;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      border-radius: 12px;
-      background: #000;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
-      -webkit-touch-callout: none;
-      user-select: none;
-      -webkit-user-select: none;
+      position: relative; min-width: 0; min-height: 0; overflow: hidden;
+      border-radius: 12px; background: #000; border: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 6px 18px rgba(0,0,0,.28);
+      -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
     }
 
     .video-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background: #000;
-      pointer-events: none;
+      position: absolute; inset: 0; z-index: 1; background: #000; pointer-events: none;
     }
 
     .cell video {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-      background: #000;
-      pointer-events: none !important;
-      -webkit-user-select: none;
-      user-select: none;
+      width: 100%; height: 100%; display: block; object-fit: contain; background: #000;
+      pointer-events: none !important; -webkit-user-select: none; user-select: none;
     }
 
-    .cell.cover video {
-      object-fit: cover;
-    }
-
-    .tap-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-      background: transparent;
-      cursor: pointer;
-    }
+    .cell.cover video { object-fit: cover; }
+    .tap-layer { position: absolute; inset: 0; z-index: 6; background: transparent; cursor: pointer; }
 
     .cell-head {
-      position: absolute;
-      z-index: 8;
-      top: 0;
-      left: 0;
-      right: 0;
-      min-height: 30px;
-      padding: 5px 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+      position: absolute; z-index: 8; top: 0; left: 0; right: 0; min-height: 30px;
+      padding: 5px 6px; display: flex; align-items: center; gap: 4px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.78), rgba(0,0,0,0));
       pointer-events: none;
     }
 
     .cell-title {
-      flex: 1;
-      min-width: 0;
-      font-size: 11px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.94);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      flex: 1; min-width: 0; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.94);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,.6);
     }
 
     .status {
-      position: absolute;
-      z-index: 9;
-      left: 6px;
-      bottom: 7px;
-      right: 174px;
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.8);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      pointer-events: none;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+      position: absolute; z-index: 9; left: 6px; bottom: 7px; right: 138px;
+      font-size: 10px; color: rgba(255,255,255,.8);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,.75);
     }
 
     .cell-actions {
-      position: absolute;
-      z-index: 12;
-      right: 5px;
-      bottom: 5px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      position: absolute; z-index: 12; right: 5px; bottom: 5px;
+      display: flex; align-items: center; gap: 4px;
     }
 
-    .mini,
-    .mini-label {
-      width: 30px;
-      height: 28px;
-      padding: 0;
-      border-radius: 9px;
-      background: rgba(17, 24, 39, 0.86);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      font-size: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
+    .mini {
+      width: 30px; height: 28px; padding: 0; border-radius: 9px;
+      background: rgba(17,24,39,.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      font-size: 12px; border: 1px solid rgba(255,255,255,.14);
     }
 
-    .mini-label {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .center-empty,
-    .center-play {
-      position: absolute;
-      inset: 0;
-      z-index: 7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      text-align: center;
-      color: #cbd5e1;
-      font-size: 12px;
-      line-height: 1.45;
-      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), rgba(0, 0, 0, 0.88));
+    .center-empty, .center-play {
+      position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center;
+      padding: 12px; text-align: center; color: #cbd5e1; font-size: 12px; line-height: 1.45;
+      background: radial-gradient(circle at center, rgba(37,99,235,.18), rgba(0,0,0,.88));
       pointer-events: none;
     }
 
-    .center-empty strong {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 18px;
-      color: #fff;
-    }
-
-    .center-play {
-      background: transparent;
-    }
+    .center-empty strong { display: block; margin-bottom: 5px; font-size: 18px; color: #fff; }
+    .center-play { background: transparent; }
+    .center-play.hidden { display: none; }
 
     .big-play {
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      background: rgba(15, 23, 42, 0.72);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: #fff;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
-    }
-
-    .center-play.hidden {
-      display: none;
+      width: 46px; height: 46px; border-radius: 999px; border: 1px solid rgba(255,255,255,.24);
+      background: rgba(15,23,42,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 22px rgba(0,0,0,.3);
     }
 
     .quick-controls {
-      position: absolute;
-      inset: 0;
-      z-index: 14;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.28);
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur(1px);
+      position: absolute; inset: 0; z-index: 14; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.3); backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
       pointer-events: none;
     }
 
-    .quick-controls.show {
-      display: flex;
+    .quick-controls.show { display: flex; }
+
+    .quick-panel {
+      width: min(92%, 300px); padding: 10px 12px 8px; border-radius: 18px;
+      background: rgba(15,23,42,.78); border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35); pointer-events: auto;
     }
+
+    .quick-buttons { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
 
     .quick-btn {
-      width: 50px;
-      height: 44px;
-      border-radius: 999px;
-      padding: 0;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      color: #fff;
-      font-size: 15px;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-      pointer-events: auto;
+      width: 48px; height: 40px; border-radius: 999px; padding: 0;
+      background: rgba(2,6,23,.62); border: 1px solid rgba(255,255,255,.22);
+      color: #fff; font-size: 18px; box-shadow: 0 6px 14px rgba(0,0,0,.25);
     }
 
+    .progress-row {
+      display: grid; grid-template-columns: 38px 1fr 38px; align-items: center; gap: 6px;
+      color: #d1d5db; font-size: 10px;
+    }
+
+    .progress-row input[type="range"] { width: 100%; height: 22px; accent-color: #60a5fa; }
+
     .toast {
-      position: fixed;
-      z-index: 99;
-      left: 50%;
-      bottom: calc(18px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      max-width: 86vw;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.92);
-      color: #fff;
-      font-size: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
-      display: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      position: fixed; z-index: 99; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translateX(-50%); max-width: 86vw; padding: 9px 12px; border-radius: 999px;
+      background: rgba(15,23,42,.92); color: #fff; font-size: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.32);
+      display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
     .modal-mask {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-      display: none;
-      background: rgba(0, 0, 0, 0.62);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      position: fixed; inset: 0; z-index: 80; display: none; background: rgba(0,0,0,.62);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
     }
 
-    .modal-mask.show {
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-    }
+    .modal-mask.show { display: flex; align-items: stretch; justify-content: center; }
 
     .modal {
-      width: min(760px, 100%);
-      height: 100%;
-      border-radius: 16px;
-      background: #0b1020;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      width: min(760px, 100%); height: 100%; border-radius: 16px; background: #0b1020;
+      border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      overflow: hidden; display: flex; flex-direction: column;
     }
 
     .modal-head {
-      flex: 0 0 auto;
-      min-height: 52px;
-      padding: 9px 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: #111827;
+      flex: 0 0 auto; min-height: 52px; padding: 9px 10px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.08); background: #111827;
     }
 
     .modal-title {
-      flex: 1;
-      min-width: 0;
-      font-size: 15px;
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      flex: 1; min-width: 0; font-size: 15px; font-weight: 800;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
     .modal-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: grid;
-      grid-template-columns: 125px 1fr;
-      overflow: hidden;
+      flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 125px 1fr; overflow: hidden;
     }
 
     .folder-pane {
-      min-width: 0;
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      background: #050816;
-      overflow-y: auto;
-      padding: 8px;
+      min-width: 0; border-right: 1px solid rgba(255,255,255,.08);
+      background: #050816; overflow-y: auto; padding: 8px;
     }
 
-    .video-pane {
-      min-width: 0;
-      overflow-y: auto;
-      padding: 8px;
-      background: #0b1020;
+    .video-pane { min-width: 0; overflow-y: auto; padding: 8px; background: #0b1020; }
+
+    .folder-item, .video-item {
+      width: 100%; border-radius: 11px; padding: 9px; margin-bottom: 6px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06);
+      color: #e5e7eb; text-align: left; display: block; height: auto; white-space: normal;
     }
 
-    .folder-item,
-    .video-item {
-      width: 100%;
-      border-radius: 11px;
-      padding: 9px;
-      margin-bottom: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      color: #e5e7eb;
-      text-align: left;
-      display: block;
-      height: auto;
-      white-space: normal;
-    }
+    .folder-item.active { background: rgba(37,99,235,.3); border-color: rgba(96,165,250,.5); }
+    .folder-name, .video-name { font-size: 12px; font-weight: 700; overflow-wrap: anywhere; line-height: 1.35; }
+    .folder-count, .video-meta { margin-top: 3px; font-size: 10px; color: #9ca3af; line-height: 1.3; }
 
-    .folder-item.active {
-      background: rgba(37, 99, 235, 0.3);
-      border-color: rgba(96, 165, 250, 0.5);
-    }
-
-    .folder-name,
-    .video-name {
-      font-size: 12px;
-      font-weight: 700;
-      overflow-wrap: anywhere;
-      line-height: 1.35;
-    }
-
-    .folder-count,
-    .video-meta {
-      margin-top: 3px;
-      font-size: 10px;
-      color: #9ca3af;
-      line-height: 1.3;
-    }
-
-    .video-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .video-actions {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
+    .video-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .video-actions { display: flex; gap: 5px; align-items: center; }
 
     .small-btn {
-      height: 28px;
-      padding: 0 9px;
-      font-size: 11px;
-      border-radius: 8px;
-      background: #1f2937;
+      height: 28px; padding: 0 9px; font-size: 11px; border-radius: 8px; background: #1f2937;
     }
 
     .empty-list {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #9ca3af;
-      font-size: 12px;
-      line-height: 1.6;
-      padding: 20px;
-    }
-
-    .select-targets {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      margin-bottom: 8px;
-      border-radius: 12px;
-      padding: 8px;
-      background: rgba(17, 24, 39, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      display: none;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .select-targets.show {
-      display: flex;
-    }
-
-    .select-targets span {
-      color: #cbd5e1;
-      font-size: 11px;
-      font-weight: 700;
+      height: 100%; display: flex; align-items: center; justify-content: center;
+      text-align: center; color: #9ca3af; font-size: 12px; line-height: 1.6; padding: 20px;
     }
 
     @media (orientation: landscape) {
-      .app {
-        flex-direction: row;
-      }
-
+      .app { flex-direction: row; }
       .topbar {
-        width: 96px;
-        height: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        border-bottom: 0;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        width: 96px; height: 100%; flex-direction: column; align-items: stretch;
+        border-bottom: 0; border-right: 1px solid rgba(255,255,255,.08);
       }
-
-      .brand {
-        flex: 0 0 auto;
-      }
-
-      .brand-title {
-        font-size: 12px;
-        white-space: normal;
-      }
-
-      .brand-subtitle {
-        display: none;
-      }
-
-      .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-      }
-
-      button,
-      .file-btn {
-        width: 100%;
-        height: 34px;
-        padding: 0 6px;
-      }
+      .brand { flex: 0 0 auto; }
+      .brand-title { font-size: 12px; white-space: normal; }
+      .brand-subtitle { display: none; }
+      .toolbar { flex-direction: column; align-items: stretch; width: 100%; }
+      button, .file-btn { width: 100%; height: 34px; padding: 0 6px; }
     }
 
     @media (max-width: 430px) {
-      .brand-title {
-        font-size: 13px;
-      }
-
-      .brand-subtitle {
-        display: none;
-      }
-
-      button,
-      .file-btn {
-        height: 30px;
-        padding: 0 7px;
-        font-size: 11px;
-      }
-
-      .grid {
-        gap: 4px;
-        padding: 4px;
-      }
-
-      .cell {
-        border-radius: 10px;
-      }
-
-      .mini,
-      .mini-label {
-        width: 28px;
-        height: 26px;
-        border-radius: 8px;
-        font-size: 11px;
-      }
-
-      .quick-btn {
-        width: 43px;
-        height: 40px;
-        font-size: 13px;
-      }
-
-      .status {
-        right: 162px;
-      }
-
-      .modal-body {
-        grid-template-columns: 105px 1fr;
-      }
-
-      .modal-head {
-        gap: 5px;
-      }
+      .brand-title { font-size: 13px; }
+      .brand-subtitle { display: none; }
+      button, .file-btn { height: 30px; padding: 0 7px; font-size: 11px; }
+      .grid { gap: 4px; padding: 4px; }
+      .cell { border-radius: 10px; }
+      .mini { width: 28px; height: 26px; border-radius: 8px; font-size: 11px; }
+      .big-play { width: 40px; height: 40px; font-size: 18px; }
+      .status { right: 128px; }
+      .modal-body { grid-template-columns: 105px 1fr; }
+      .modal-head { gap: 5px; }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <header class="topbar">
@@ -632,7 +265,8 @@
         <input id="multiInput" type="file" accept="video/*" multiple />
         <button class="secondary" id="playAllBtn" type="button">播放</button>
         <button class="secondary" id="pauseAllBtn" type="button">暂停</button>
-        <button class="secondary" id="muteAllBtn" type="button">全静音</button>
+        <button class="secondary" id="muteAllBtn" type="button">静音</button>
+        <button class="secondary" id="unmuteAllBtn" type="button">开声</button>
         <button class="secondary" id="clearBtn" type="button">清空</button>
       </div>
     </header>
@@ -652,14 +286,6 @@
         <div class="modal-body">
           <aside class="folder-pane" id="folderList"></aside>
           <section class="video-pane">
-            <div class="select-targets" id="selectTargets">
-              <span>选择到：</span>
-              <button class="small-btn" data-target="0" type="button">屏1</button>
-              <button class="small-btn" data-target="1" type="button">屏2</button>
-              <button class="small-btn" data-target="2" type="button">屏3</button>
-              <button class="small-btn" data-target="3" type="button">屏4</button>
-              <button class="small-btn danger" id="cancelPickBtn" type="button">取消</button>
-            </div>
             <div id="videoList"></div>
           </section>
         </div>
@@ -674,18 +300,18 @@
     const playAllBtn = document.getElementById('playAllBtn');
     const pauseAllBtn = document.getElementById('pauseAllBtn');
     const muteAllBtn = document.getElementById('muteAllBtn');
+    const unmuteAllBtn = document.getElementById('unmuteAllBtn');
     const clearBtn = document.getElementById('clearBtn');
     const libraryBtn = document.getElementById('libraryBtn');
     const libraryModal = document.getElementById('libraryModal');
+    const libraryTitle = document.getElementById('libraryTitle');
     const closeLibraryBtn = document.getElementById('closeLibraryBtn');
     const newFolderBtn = document.getElementById('newFolderBtn');
     const libraryAddInput = document.getElementById('libraryAddInput');
     const folderList = document.getElementById('folderList');
     const videoList = document.getElementById('videoList');
-    const selectTargets = document.getElementById('selectTargets');
-    const cancelPickBtn = document.getElementById('cancelPickBtn');
 
-    const DB_NAME = 'iphone_4_screen_video_library_v1';
+    const DB_NAME = 'iphone_4_screen_video_library_v2';
     const DB_VERSION = 1;
     const DEFAULT_FOLDER_ID = 'default';
 
@@ -696,7 +322,7 @@
     let currentFolderId = DEFAULT_FOLDER_ID;
     let currentVideos = [];
     let pendingPickScreen = null;
-    let allMuted = true;
+    let globalMuted = true;
 
     function preventDefaultTouch(event) {
       if (!event.target.closest('input') && !event.target.closest('label') && !event.target.closest('button') && !event.target.closest('.modal')) {
@@ -736,14 +362,23 @@
       return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
     }
 
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
     function createId(prefix) {
       return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     }
 
     function forceInlineVideo(video) {
       video.controls = false;
-      video.defaultMuted = allMuted;
-      video.muted = allMuted;
+      video.defaultMuted = globalMuted;
+      video.muted = globalMuted;
       video.autoplay = false;
       video.playsInline = true;
       video.setAttribute('playsinline', '');
@@ -850,7 +485,7 @@
       }
 
       await refreshLibrary();
-      showToast(added ? `已添加 ${added} 个视频到文件管理` : '没有可添加的视频文件');
+      showToast(added ? `已添加 ${added} 个视频` : '没有可添加的视频文件');
     }
 
     async function deleteVideo(videoId) {
@@ -865,7 +500,7 @@
         currentFolderId = DEFAULT_FOLDER_ID;
       }
       currentVideos = await getVideosByFolder(currentFolderId);
-      renderFolders();
+      await renderFolders();
       renderVideos();
     }
 
@@ -888,7 +523,7 @@
         button.addEventListener('click', async () => {
           currentFolderId = folder.id;
           currentVideos = await getVideosByFolder(currentFolderId);
-          renderFolders();
+          await renderFolders();
           renderVideos();
         });
         folderList.appendChild(button);
@@ -897,12 +532,11 @@
 
     function renderVideos() {
       videoList.innerHTML = '';
-      selectTargets.classList.toggle('show', pendingPickScreen === null);
 
       if (!currentVideos.length) {
         videoList.innerHTML = `
           <div class="empty-list">
-            当前文件夹暂无视频。<br />点击顶部“添加”，从手机文件中选择视频加入文件管理。
+            当前文件夹暂无视频。<br />点击顶部“添加”，从手机文件中选择视频加入当前文件夹。
           </div>
         `;
         return;
@@ -911,25 +545,28 @@
       currentVideos.forEach(video => {
         const item = document.createElement('div');
         item.className = 'video-item';
+        const useButton = pendingPickScreen !== null
+          ? `<button class="small-btn" type="button" data-action="use">使用</button>`
+          : '';
+
         item.innerHTML = `
           <div>
             <div class="video-name">🎬 ${video.name}</div>
             <div class="video-meta">${formatSize(video.size)} · ${video.type || 'video'} · ${new Date(video.createdAt).toLocaleDateString()}</div>
           </div>
           <div class="video-actions">
-            <button class="small-btn" type="button" data-action="use">使用</button>
+            ${useButton}
             <button class="small-btn danger" type="button" data-action="delete">删</button>
           </div>
         `;
 
-        item.querySelector('[data-action="use"]').addEventListener('click', async () => {
-          if (pendingPickScreen !== null) {
+        const useBtn = item.querySelector('[data-action="use"]');
+        if (useBtn) {
+          useBtn.addEventListener('click', async () => {
             await loadLibraryVideoToPlayer(pendingPickScreen, video.id);
             closeLibrary();
-          } else {
-            showToast('请先点击屏幕里的“库”按钮，或上方选择屏幕');
-          }
-        });
+          });
+        }
 
         item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
           if (confirm(`确定删除「${video.name}」吗？`)) {
@@ -954,27 +591,34 @@
         </div>
         <div class="tap-layer" id="tap-${index}"></div>
         <div class="cell-head">
-          <div class="cell-title" id="title-${index}">窗口 ${index + 1}</div>
+          <div class="cell-title" id="title-${index}">屏幕 ${index + 1}</div>
         </div>
         <div class="center-empty" id="empty-${index}">
           <div>
             <strong>${index + 1}</strong>
-            点 + 直接选视频<br />点“库”从文件管理选择
+            点右下角 ＋<br />从视频库选择
           </div>
         </div>
         <div class="center-play hidden" id="centerPlay-${index}">
           <div class="big-play">▶</div>
         </div>
         <div class="quick-controls" id="quick-${index}">
-          <button class="quick-btn" id="back-${index}" type="button">-10</button>
-          <button class="quick-btn" id="mid-${index}" type="button">⏸</button>
-          <button class="quick-btn" id="forward-${index}" type="button">+10</button>
+          <div class="quick-panel">
+            <div class="quick-buttons">
+              <button class="quick-btn" id="back-${index}" type="button">⏪</button>
+              <button class="quick-btn" id="mid-${index}" type="button">⏸</button>
+              <button class="quick-btn" id="forward-${index}" type="button">⏩</button>
+            </div>
+            <div class="progress-row">
+              <span id="current-${index}">00:00</span>
+              <input id="progress-${index}" type="range" min="0" max="0" value="0" step="0.1" />
+              <span id="duration-${index}">00:00</span>
+            </div>
+          </div>
         </div>
         <div class="status" id="status-${index}">未选择</div>
         <div class="cell-actions">
-          <label class="mini-label" for="file-${index}" title="选择视频">+</label>
-          <input id="file-${index}" type="file" accept="video/*" />
-          <button class="mini" id="library-${index}" title="从库选择" type="button">库</button>
+          <button class="mini" id="pick-${index}" title="从视频库选择" type="button">＋</button>
           <button class="mini" id="play-${index}" title="播放/暂停" type="button">▶</button>
           <button class="mini" id="mute-${index}" title="静音" type="button">🔈</button>
           <button class="mini" id="fit-${index}" title="填充/适应" type="button">⛶</button>
@@ -988,37 +632,34 @@
         cell,
         tapLayer: cell.querySelector(`#tap-${index}`),
         video: cell.querySelector(`#video-${index}`),
-        fileInput: cell.querySelector(`#file-${index}`),
         title: cell.querySelector(`#title-${index}`),
         empty: cell.querySelector(`#empty-${index}`),
         centerPlay: cell.querySelector(`#centerPlay-${index}`),
         quick: cell.querySelector(`#quick-${index}`),
         status: cell.querySelector(`#status-${index}`),
-        libraryBtn: cell.querySelector(`#library-${index}`),
+        pickBtn: cell.querySelector(`#pick-${index}`),
         playBtn: cell.querySelector(`#play-${index}`),
         muteBtn: cell.querySelector(`#mute-${index}`),
         fitBtn: cell.querySelector(`#fit-${index}`),
         backBtn: cell.querySelector(`#back-${index}`),
         midBtn: cell.querySelector(`#mid-${index}`),
         forwardBtn: cell.querySelector(`#forward-${index}`),
+        progress: cell.querySelector(`#progress-${index}`),
+        currentTimeLabel: cell.querySelector(`#current-${index}`),
+        durationLabel: cell.querySelector(`#duration-${index}`),
         objectUrl: null,
         file: null,
         quickTimer: null,
+        isScrubbing: false
       };
 
       forceInlineVideo(player.video);
 
-      player.fileInput.addEventListener('change', (event) => {
-        const file = event.target.files && event.target.files[0];
-        if (file) loadFile(index, file, false);
-      });
-
-      player.libraryBtn.addEventListener('click', async (event) => {
+      player.pickBtn.addEventListener('click', async (event) => {
         event.preventDefault();
         event.stopPropagation();
         pendingPickScreen = index;
-        await openLibrary();
-        showToast(`请选择要放入屏幕 ${index + 1} 的视频`);
+        await openLibrary(index);
       });
 
       player.playBtn.addEventListener('click', (event) => {
@@ -1027,17 +668,11 @@
         togglePlay(index);
       });
 
-      player.tapLayer.addEventListener('click', (event) => {
+      player.tapLayer.addEventListener('pointerup', (event) => {
         event.preventDefault();
         event.stopPropagation();
         handleCellTap(index);
       });
-
-      player.tapLayer.addEventListener('touchend', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        handleCellTap(index);
-      }, { passive: false });
 
       player.muteBtn.addEventListener('click', (event) => {
         event.preventDefault();
@@ -1049,7 +684,7 @@
         event.preventDefault();
         event.stopPropagation();
         player.cell.classList.toggle('cover');
-        showToast(`窗口 ${index + 1}：${player.cell.classList.contains('cover') ? '填充画面' : '完整显示'}`);
+        showToast(`屏幕 ${index + 1}：${player.cell.classList.contains('cover') ? '填充画面' : '完整显示'}`);
       });
 
       player.backBtn.addEventListener('click', (event) => {
@@ -1070,6 +705,27 @@
         togglePlay(index);
       });
 
+      player.progress.addEventListener('pointerdown', (event) => {
+        event.stopPropagation();
+        player.isScrubbing = true;
+        showQuickControls(index);
+      });
+
+      player.progress.addEventListener('input', (event) => {
+        event.stopPropagation();
+        if (Number.isFinite(player.video.duration)) {
+          player.video.currentTime = Number(player.progress.value);
+          updateProgress(index);
+        }
+        showQuickControls(index);
+      });
+
+      player.progress.addEventListener('change', (event) => {
+        event.stopPropagation();
+        player.isScrubbing = false;
+        showQuickControls(index);
+      });
+
       player.video.addEventListener('webkitbeginfullscreen', () => {
         try {
           player.video.pause();
@@ -1084,6 +740,9 @@
         }
       });
 
+      player.video.addEventListener('loadedmetadata', () => updateProgress(index));
+      player.video.addEventListener('timeupdate', () => updateProgress(index));
+
       player.video.addEventListener('play', () => {
         player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
         player.playBtn.textContent = '⏸';
@@ -1097,7 +756,6 @@
           player.playBtn.textContent = '▶';
           player.midBtn.textContent = '▶';
           player.centerPlay.classList.remove('hidden');
-          hideQuickControls(index);
         }
       });
 
@@ -1117,10 +775,24 @@
       players.push(player);
     }
 
+    function updateProgress(index) {
+      const player = players[index];
+      if (!player) return;
+      const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
+      const current = Number.isFinite(player.video.currentTime) ? player.video.currentTime : 0;
+      player.progress.max = duration || 0;
+      if (!player.isScrubbing) {
+        player.progress.value = current || 0;
+      }
+      player.currentTimeLabel.textContent = formatTime(current);
+      player.durationLabel.textContent = formatTime(duration);
+    }
+
     function handleCellTap(index) {
       const player = players[index];
       if (!player.file) {
-        showToast(`请先给窗口 ${index + 1} 选择视频`);
+        pendingPickScreen = index;
+        openLibrary(index);
         return;
       }
 
@@ -1133,9 +805,11 @@
 
     function showQuickControls(index) {
       const player = players[index];
+      if (!player || !player.file) return;
+      updateProgress(index);
       player.quick.classList.add('show');
       clearTimeout(player.quickTimer);
-      player.quickTimer = setTimeout(() => hideQuickControls(index), 2600);
+      player.quickTimer = setTimeout(() => hideQuickControls(index), 3600);
     }
 
     function hideQuickControls(index) {
@@ -1148,8 +822,10 @@
     function seekBy(index, seconds) {
       const player = players[index];
       if (!player || !player.file) return;
-      const next = Math.max(0, Math.min(player.video.duration || 0, player.video.currentTime + seconds));
-      player.video.currentTime = Number.isFinite(next) ? next : player.video.currentTime;
+      const duration = Number.isFinite(player.video.duration) ? player.video.duration : 0;
+      const next = Math.max(0, Math.min(duration, player.video.currentTime + seconds));
+      player.video.currentTime = next;
+      updateProgress(index);
       showQuickControls(index);
     }
 
@@ -1169,14 +845,18 @@
       player.video.src = url;
       player.video.load();
       player.title.textContent = shortName(file.name);
-      player.status.textContent = fromLibrary ? '已从文件管理载入' : '已载入 · 未入库';
+      player.status.textContent = fromLibrary ? '已从视频库载入' : '已载入 · 未入库';
       player.empty.style.display = 'none';
       player.centerPlay.classList.remove('hidden');
       player.playBtn.textContent = '▶';
       player.midBtn.textContent = '▶';
       player.muteBtn.textContent = player.video.muted ? '🔈' : '🔇';
+      player.currentTimeLabel.textContent = '00:00';
+      player.durationLabel.textContent = '00:00';
+      player.progress.value = 0;
+      player.progress.max = 0;
       hideQuickControls(index);
-      showToast(`窗口 ${index + 1} 已载入视频`);
+      showToast(`屏幕 ${index + 1} 已载入视频`);
     }
 
     async function loadLibraryVideoToPlayer(index, videoId) {
@@ -1192,12 +872,13 @@
     function togglePlay(index) {
       const player = players[index];
       if (!player || !player.file) {
-        showToast(`请先给窗口 ${index + 1} 选择视频`);
+        pendingPickScreen = index;
+        openLibrary(index);
         return;
       }
 
       forceInlineVideo(player.video);
-      player.video.muted = allMuted ? true : player.video.muted;
+      player.video.muted = globalMuted ? true : player.video.muted;
 
       if (player.video.paused || player.video.ended) {
         const playPromise = player.video.play();
@@ -1220,7 +901,7 @@
       if (!player.video.paused) {
         player.status.textContent = player.video.muted ? '播放中 · 静音' : '播放中';
       }
-      showToast(`窗口 ${index + 1}：${player.video.muted ? '已静音' : '已开启声音'}`);
+      showToast(`屏幕 ${index + 1}：${player.video.muted ? '已静音' : '已开启声音'}`);
     }
 
     function playAll() {
@@ -1229,7 +910,7 @@
         if (player.file) {
           count++;
           forceInlineVideo(player.video);
-          player.video.muted = allMuted ? true : player.video.muted;
+          player.video.muted = globalMuted ? true : player.video.muted;
           const playPromise = player.video.play();
           if (playPromise && typeof playPromise.catch === 'function') {
             playPromise.catch(() => {
@@ -1250,18 +931,17 @@
       showToast('已暂停全部视频');
     }
 
-    function toggleMuteAll() {
-      allMuted = !allMuted;
+    function setMuteAll(muted) {
+      globalMuted = muted;
       players.forEach((player) => {
-        player.video.muted = allMuted;
-        player.video.defaultMuted = allMuted;
-        player.muteBtn.textContent = allMuted ? '🔈' : '🔇';
+        player.video.muted = muted;
+        player.video.defaultMuted = muted;
+        player.muteBtn.textContent = muted ? '🔈' : '🔇';
         if (player.file && !player.video.paused) {
-          player.status.textContent = allMuted ? '播放中 · 静音' : '播放中';
+          player.status.textContent = muted ? '播放中 · 静音' : '播放中';
         }
       });
-      muteAllBtn.textContent = allMuted ? '全开声' : '全静音';
-      showToast(allMuted ? '已全部静音' : '已全部开启声音');
+      showToast(muted ? '已全部静音' : '已全部开启声音');
     }
 
     function clearAll() {
@@ -1273,31 +953,36 @@
         player.video.removeAttribute('src');
         player.video.load();
         forceInlineVideo(player.video);
-        player.title.textContent = `窗口 ${player.index + 1}`;
+        player.title.textContent = `屏幕 ${player.index + 1}`;
         player.status.textContent = '未选择';
         player.empty.style.display = 'flex';
         player.centerPlay.classList.add('hidden');
         player.playBtn.textContent = '▶';
         player.midBtn.textContent = '▶';
-        player.muteBtn.textContent = allMuted ? '🔈' : '🔇';
-        player.fileInput.value = '';
+        player.muteBtn.textContent = globalMuted ? '🔈' : '🔇';
+        player.currentTimeLabel.textContent = '00:00';
+        player.durationLabel.textContent = '00:00';
+        player.progress.value = 0;
+        player.progress.max = 0;
         hideQuickControls(player.index);
       });
       multiInput.value = '';
       showToast('已清空');
     }
 
-    async function openLibrary() {
-      pendingPickScreen = pendingPickScreen;
+    async function openLibrary(targetScreenIndex = null) {
+      pendingPickScreen = targetScreenIndex;
+      libraryTitle.textContent = targetScreenIndex === null
+        ? '视频文件管理'
+        : `选择视频到屏幕 ${targetScreenIndex + 1}`;
       libraryModal.classList.add('show');
       await refreshLibrary();
-      renderVideos();
     }
 
     function closeLibrary() {
       libraryModal.classList.remove('show');
       pendingPickScreen = null;
-      selectTargets.classList.remove('show');
+      libraryTitle.textContent = '视频文件管理';
     }
 
     multiInput.addEventListener('change', (event) => {
@@ -1315,8 +1000,7 @@
     libraryBtn.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      pendingPickScreen = null;
-      await openLibrary();
+      await openLibrary(null);
     });
 
     closeLibraryBtn.addEventListener('click', closeLibrary);
@@ -1325,19 +1009,6 @@
       const name = prompt('请输入文件夹名称');
       if (!name || !name.trim()) return;
       await addFolder(name.trim());
-    });
-
-    cancelPickBtn.addEventListener('click', () => {
-      pendingPickScreen = null;
-      closeLibrary();
-    });
-
-    selectTargets.querySelectorAll('[data-target]').forEach(button => {
-      button.addEventListener('click', () => {
-        pendingPickScreen = Number(button.dataset.target);
-        selectTargets.classList.remove('show');
-        showToast(`请选择要放入屏幕 ${pendingPickScreen + 1} 的视频`);
-      });
     });
 
     playAllBtn.addEventListener('click', (event) => {
@@ -1355,7 +1026,13 @@
     muteAllBtn.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      toggleMuteAll();
+      setMuteAll(true);
+    });
+
+    unmuteAllBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setMuteAll(false);
     });
 
     clearBtn.addEventListener('click', (event) => {
@@ -1377,7 +1054,7 @@
         await refreshLibrary();
       } catch (error) {
         console.error(error);
-        showToast('文件管理初始化失败，仍可直接选择视频播放');
+        showToast('文件管理初始化失败，仍可直接批量选择视频播放');
       }
     }
 
