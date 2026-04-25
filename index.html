@@ -62,6 +62,12 @@
     svg { width: 1em; height: 1em; display: inline-block; vertical-align: middle; }
 
     .app { width: 100vw; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* 伪全屏引擎降级样式 (iOS/UC 适配) */
+    .app.css-fullscreen .tabbar-wrapper { display: none !important; }
+    .app.css-fullscreen .play-page { background: #000; z-index: 9999; }
+    .app.css-fullscreen { padding-top: 0; }
+
     .page { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
     .page.active { display: flex; }
 
@@ -117,7 +123,6 @@
     .unlock-hint { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
     /* ================= 全局悬浮工具栏 ================= */
-    /* 优化：修改为 6 列网格，容纳全屏按钮 */
     .global-toolbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 96%; max-width: 480px; height: 68px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; display: grid; grid-template-columns: repeat(6, 1fr); z-index: 40; opacity: 0.15; transition: opacity 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
     .global-toolbar.is-awake { opacity: 1; }
     .tb-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); gap: 4px; }
@@ -369,7 +374,7 @@
     // =======================
     // 核心架构：分离数据库
     // =======================
-    const DB_NAME = 'video_lib_v21'; 
+    const DB_NAME = 'video_lib_v22'; 
     let db = null;
     
     let folders = [];
@@ -483,23 +488,51 @@
     UI.iconFullscreen.innerHTML = ICONS.fullscreen;
 
     // =======================
-    // 全屏控制
+    // 全屏 / 伪全屏 混合引擎
     // =======================
     document.getElementById('tbFullscreen').addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          showToast('当前浏览器不支持或已拦截全屏请求');
-        });
+      const appEl = UI.app;
+      const docEl = document.documentElement;
+      const isNativeFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      const isCssFs = appEl.classList.contains('css-fullscreen');
+
+      if (isNativeFs || isCssFs) {
+        if (isNativeFs) {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+        appEl.classList.remove('css-fullscreen');
+        UI.iconFullscreen.innerHTML = ICONS.fullscreen;
+        UI.textFullscreen.textContent = '全屏';
       } else {
-        document.exitFullscreen();
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => cssFullscreen());
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else {
+          cssFullscreen();
+        }
       }
     });
 
-    document.addEventListener('fullscreenchange', () => {
-      const isFull = !!document.fullscreenElement;
-      UI.iconFullscreen.innerHTML = isFull ? ICONS.exitFullscreen : ICONS.fullscreen;
-      UI.textFullscreen.textContent = isFull ? '退出' : '全屏';
-    });
+    function cssFullscreen() {
+      UI.app.classList.add('css-fullscreen');
+      UI.iconFullscreen.innerHTML = ICONS.exitFullscreen;
+      UI.textFullscreen.textContent = '退出';
+    }
+
+    function handleNativeFsChange() {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFull && !UI.app.classList.contains('css-fullscreen')) {
+         UI.iconFullscreen.innerHTML = ICONS.fullscreen;
+         UI.textFullscreen.textContent = '全屏';
+      } else if (isFull) {
+         UI.iconFullscreen.innerHTML = ICONS.exitFullscreen;
+         UI.textFullscreen.textContent = '退出';
+      }
+    }
+    document.addEventListener('fullscreenchange', handleNativeFsChange);
+    document.addEventListener('webkitfullscreenchange', handleNativeFsChange);
 
     // =======================
     // 底层数据库工具
@@ -560,14 +593,13 @@
     }
 
     // =======================
-    // 封面提取 (修复iOS黑屏Bug)
+    // 封面提取 (修复 iOS 限制)
     // =======================
     function canvasToBlob(canvas, mime = 'image/jpeg', quality = 0.65) { return new Promise(resolve => canvas.toBlob(resolve, mime, quality)); }
 
     async function generateThumbnail(fileBlob) {
         return new Promise((resolve) => {
             const video = document.createElement('video');
-            // 优化点1：弃用 display:none，使用视觉隐藏，逼迫 iOS Safari 工作
             video.style.cssText = 'position:absolute; top:0; left:0; width:1px; height:1px; opacity:0.01; pointer-events:none; z-index:-999;';
             video.muted = true; video.playsInline = true; video.autoplay = true; 
             document.body.appendChild(video); 
@@ -1014,7 +1046,7 @@
         div.className = 'screen-card';
         div.innerHTML = `
           <div class="video-container">
-            <video playsinline webkit-playsinline disablePictureInPicture></video>
+            <video playsinline webkit-playsinline disablePictureInPicture x5-video-player-type="h5" x5-video-player-fullscreen="true" x5-playsinline x-webkit-airplay="allow"></video>
             <div class="screen-label">屏幕 ${i+1}</div>
             <div class="screen-placeholder">
               <div class="placeholder-icon">${ICONS.plus}</div>
@@ -1053,7 +1085,7 @@
           btnPlay: div.querySelector('.btn-play'), btnRw: div.querySelector('.btn-rw'),
           btnFf: div.querySelector('.btn-ff'), btnSwitch: div.querySelector('.btn-switch'),
           btnSpeed: div.querySelector('.btn-speed'), btnFit: div.querySelector('.btn-fit'),
-          btnMute: div.querySelector('.btn-mute'), // 优化点1：单屏独立静音
+          btnMute: div.querySelector('.btn-mute'),
           progBar: div.querySelector('.prog-bar'), timeCur: div.querySelector('.time-cur'),
           timeDur: div.querySelector('.time-dur'),
           speedVal: 1.0, isRotated: false, hideTimer: null, file: null, url: null
@@ -1085,7 +1117,6 @@
                   player.video.muted = globalMuted;
                   await player.video.play();
               } catch(err) {
-                  // 防火墙：移动端多音频并发受限时，退级为静音播放以保画面
                   player.video.muted = true;
                   await player.video.play().catch(()=>{});
                   showToast('播放受限，该屏幕已自动静音');
@@ -1179,7 +1210,7 @@
     }
 
     // =======================
-    // 全局工具栏与锁屏
+    // 全局控制
     // =======================
     document.getElementById('tbLock').addEventListener('click', () => {
       isLocked = true; UI.app.classList.add('is-locked'); 
@@ -1312,7 +1343,7 @@
     });
 
     // =======================
-    // 增加与删除视频 (流式队列进度条)
+    // 增加与删除视频
     // =======================
     document.getElementById('btnNewFolder').addEventListener('click', async () => {
       const name = prompt('文件夹名称');
