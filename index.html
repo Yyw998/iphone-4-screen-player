@@ -28,8 +28,6 @@
       --tab-border: #e2e8f0;
       --folder-active-bg: #f8fbff;
       --muted-text: #6b7280;
-
-      /* 优化点1：把收起手柄适配亮色 */
       --handle-bg: #f1f5f9;
       --handle-text: #64748b;
     }
@@ -49,7 +47,6 @@
         --tab-border: rgba(255,255,255,0.05);
         --folder-active-bg: #0f172a;
         --muted-text: #94a3b8;
-        
         --handle-bg: #1e293b;
         --handle-text: #94a3b8;
       }
@@ -133,7 +130,7 @@
     .tab.active { color: var(--tab-active-color); }
     .tab-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
 
-    /* ================= 选片/管理 弹窗通用样式 ================= */
+    /* ================= 选片/管理/投屏 弹窗通用样式 ================= */
     .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
     .quick-sheet-overlay.show { display: flex; }
     .quick-sheet { width: 100%; background: var(--card-bg); color: var(--app-text); border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -154,6 +151,11 @@
     .fm-actions { display: flex; gap: 4px; }
     .fm-btn { width: 30px; height: 30px; border-radius: 6px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; color: var(--app-text); font-size: 14px; border: 1px solid var(--card-border); }
     .fm-btn.danger { color: var(--red); background: #fff1f2; border-color: #fecdd3; }
+
+    /* 优化点2：投放到屏幕UI */
+    .screen-select-list { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); padding-bottom: 8px; }
+    .screen-select-btn { background: var(--app-bg); border: 1px solid var(--blue); color: var(--blue); border-radius: 12px; padding: 16px; font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s; cursor: pointer; }
+    .screen-select-btn:active { background: var(--blue); color: #fff; }
 
     /* ================= 视频库 ================= */
     .library-page { color: var(--app-text); height: 100%; }
@@ -183,21 +185,22 @@
     .btn-view { cursor: pointer; font-size: 16px; display: flex; align-items: center; }
     
     .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
-    .video-item { border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; transition: all 0.3s; }
+    .video-item { border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; transition: all 0.3s; cursor: pointer;}
+    .video-item:active { opacity: 0.8; }
     
-    /* List View (默认) */
+    /* List View */
     .video-list:not(.grid-view) .video-item { min-height: 78px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; }
-    .video-list:not(.grid-view) .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
-    .video-list:not(.grid-view) .video-main { min-width: 0; }
-    .video-list:not(.grid-view) .video-actions { display: flex; justify-content: flex-end; margin-top: 4px;}
+    .video-list:not(.grid-view) .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; pointer-events: none;}
+    .video-list:not(.grid-view) .video-main { min-width: 0; pointer-events: none;}
+    .video-list:not(.grid-view) .video-actions { display: flex; justify-content: flex-end; margin-top: 4px; pointer-events: auto;}
     
     /* Grid View */
     .video-list.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .video-list.grid-view .video-item { display: flex; flex-direction: column; padding: 6px; gap: 6px; }
-    .video-list.grid-view .thumb { position: relative; width: 100%; height: 100px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
+    .video-list.grid-view .thumb { position: relative; width: 100%; height: 100px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; pointer-events: none;}
     .video-list.grid-view .video-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
     .video-list.grid-view .video-meta { font-size: 10px; margin-bottom: 2px; }
-    .video-list.grid-view .video-actions { margin-top: auto; width: 100%; }
+    .video-list.grid-view .video-actions { margin-top: auto; width: 100%; pointer-events: auto;}
     .video-list.grid-view .delete-btn { width: 100%; justify-content: center; }
 
     .thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -211,25 +214,12 @@
     .loading-more { text-align: center; padding: 15px; font-size: 12px; color: var(--muted-text); display: none; }
     .loading-more.show { display: block; }
 
-    /* ================= 优化点4：物理横屏响应式适配 ================= */
+    /* ================= 优化点1：物理横屏响应式适配 ================= */
     @media (orientation: landscape) {
-      /* 将整体布局转化为水平侧边栏结构，最大化利用高度 */
-      .app { flex-direction: row; }
-      
-      /* 将导航栏移动到最左侧（或右侧） */
-      .tabbar-wrapper { height: 100%; width: 66px; flex: 0 0 auto; }
-      .tabbar { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; border-top: none; border-right: 1px solid var(--tab-border); }
-      .collapse-handle { display: none; } /* 横屏时完全不需要收起手柄 */
-
-      /* 紧凑化全局工具栏 */
       .global-toolbar { width: 85%; height: 52px; top: 6px; }
-      
-      /* 紧凑化单屏控制栏，防止在横屏高度下遮挡过多视频 */
       .screen-controls { padding: 6px; gap: 4px; }
       .qm-btn.play { width: 30px; height: 30px; font-size: 16px; }
       .qm-util { font-size: 10px; padding: 2px 6px; }
-      
-      /* 优化视频库的弹窗高度 */
       .quick-sheet { max-height: 85vh; overflow-y: auto; }
     }
   </style>
@@ -318,6 +308,18 @@
       </div>
     </div>
 
+    <div class="quick-sheet-overlay" id="screenSelectOverlay">
+      <div class="quick-sheet">
+        <div class="qs-header">
+          <div class="qs-title">选择投放屏幕</div>
+          <button class="qs-close" id="screenSelectClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="screen-select-list" id="screenSelectList"></div>
+      </div>
+    </div>
+
     <div class="quick-sheet-overlay" id="sortSheetOverlay">
       <div class="quick-sheet">
         <div class="qs-header">
@@ -352,7 +354,7 @@
 
   <script>
     // =======================
-    // 核心架构：分离数据库 (升级V19支持文件夹独立排序)
+    // 核心架构：分离数据库
     // =======================
     const DB_NAME = 'video_lib_v19'; 
     let db = null;
@@ -362,16 +364,17 @@
     let isLocked = false;
     let globalMuted = true;
     let pendingScreenIndex = null;
+    let pendingCastVideoId = null; // 投屏选择视频ID缓存
     let qsFolderId = 'default';
     let currentLayout = 4;
-    let viewMode = 'list'; // list, grid
+    let viewMode = 'list';
     let toastTimer, toolbarTimer;
     const players = [];
 
     const SORT_LABELS = { timeDesc: '按最新', timeAsc: '按最早', nameAsc: '按名称 A-Z', nameDesc: '按名称 Z-A' };
 
     // =======================
-    // 一致性风格的 SVG 图标库
+    // SVG 图标库
     // =======================
     const ICONS = {
       play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
@@ -431,7 +434,10 @@
       fmList: document.getElementById('fmList'),
       fmClose: document.getElementById('fmClose'),
       sortSheetOverlay: document.getElementById('sortSheetOverlay'),
-      sortClose: document.getElementById('sortClose')
+      sortClose: document.getElementById('sortClose'),
+      screenSelectOverlay: document.getElementById('screenSelectOverlay'),
+      screenSelectClose: document.getElementById('screenSelectClose'),
+      screenSelectList: document.getElementById('screenSelectList')
     };
 
     function showToast(msg) {
@@ -649,7 +655,7 @@
     }, { threshold: 0.1 });
 
     // =======================
-    // 列表分页与排序逻辑 (优化点3)
+    // 列表分页与排序逻辑
     // =======================
     const videoPageState = { folderId: 'default', pageSize: 30, offset: 0, hasMore: true, loading: false, list: [] };
 
@@ -769,7 +775,14 @@
               </div>
             `;
             
-            item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+            // 优化点2：从视频库列表点击，弹出投屏选择
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-btn')) return;
+                openScreenSelectPopup(meta.id);
+            });
+
+            item.querySelector('[data-action="delete"]').addEventListener('click', async (e) => {
+                e.stopPropagation();
                 if(confirm(`确定删除「${meta.name}」吗？`)) await deleteVideo(meta.id);
             });
             
@@ -785,7 +798,40 @@
     }
 
     // =======================
-    // 文件夹管理功能 (重排/重命名/删除)
+    // 投放到屏幕功能
+    // =======================
+    function openScreenSelectPopup(videoId) {
+        pendingCastVideoId = videoId;
+        UI.screenSelectOverlay.classList.add('show');
+        UI.screenSelectList.innerHTML = '';
+        
+        const screenCount = currentLayout === 4 ? 4 : (currentLayout === 2 ? 2 : 3);
+        
+        for (let i = 0; i < screenCount; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'screen-select-btn';
+            btn.textContent = `投放到 屏幕 ${i + 1}`;
+            btn.onclick = () => {
+                UI.screenSelectOverlay.classList.remove('show');
+                loadVideoToScreen(i, pendingCastVideoId);
+                
+                // 切换回播放页
+                UI.playPage.classList.add('active'); UI.libPage.classList.remove('active');
+                UI.tabPlay.classList.add('active'); UI.tabLib.classList.remove('active');
+                UI.collapseHandle.style.opacity = '1'; UI.collapseHandle.style.pointerEvents = 'auto';
+                pendingCastVideoId = null;
+            };
+            UI.screenSelectList.appendChild(btn);
+        }
+    }
+    
+    UI.screenSelectClose.addEventListener('click', () => {
+        UI.screenSelectOverlay.classList.remove('show');
+        pendingCastVideoId = null;
+    });
+
+    // =======================
+    // 文件夹管理功能
     // =======================
     UI.btnManageFolders.addEventListener('click', () => {
         renderFolderManageList();
@@ -1046,7 +1092,7 @@
         player.video.muted = globalMuted;
         player.video.play().catch(()=>{});
 
-        // 优化点2：沉浸式播放，隐藏Label和占位符
+        // 沉浸式播放，隐藏Label和占位符
         player.placeholder.style.display = 'none';
         player.label.style.opacity = '0';
 
@@ -1148,7 +1194,7 @@
         p.video.style.transform = 'none'; p.isRotated = false;
         p.btnFit.innerHTML = `${ICONS.rotate} <span>横屏</span>`;
         p.placeholder.style.display = 'flex';
-        p.label.style.opacity = '1'; // 优化点2：清空后恢复Label
+        p.label.style.opacity = '1'; 
         p.controls.classList.remove('active');
       });
       updateGlobalIcons(); showToast('已清空全部屏幕');
@@ -1237,7 +1283,7 @@
                if(p.url) URL.revokeObjectURL(p.url); 
                p.video.removeAttribute('src'); 
                p.placeholder.style.display = 'flex';
-               p.label.style.opacity = '1'; // 恢复Label
+               p.label.style.opacity = '1'; 
                p.controls.classList.remove('active');
            } 
         });
@@ -1249,9 +1295,6 @@
         initPlayers(); 
         loadFirstPage(currentFolderId); 
         updateGlobalIcons(); 
-        
-        // 尝试锁定横竖屏以增强横屏体验稳定性
-        try { if(screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(()=>{}); } catch(e){}
     });
   </script>
 </body>
