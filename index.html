@@ -22,9 +22,16 @@
       --card-border: #e5e7eb;
       --header-bg: rgba(247, 249, 253, 0.92);
       --header-border: rgba(226, 232, 240, 0.72);
-      --tabbar-bg: #0f172a; 
+      --tabbar-bg: rgba(255, 255, 255, 0.94);
+      --tab-color: #6b7280;
+      --tab-active-color: #0b73ff;
+      --tab-border: #e2e8f0;
       --folder-active-bg: #f8fbff;
       --muted-text: #6b7280;
+
+      /* 优化点1：把收起手柄适配亮色 */
+      --handle-bg: #f1f5f9;
+      --handle-text: #64748b;
     }
 
     /* 黑夜模式 (暗色背景) */
@@ -37,8 +44,14 @@
         --header-bg: rgba(2, 6, 23, 0.92);
         --header-border: rgba(255,255,255,0.05);
         --tabbar-bg: #020617;
+        --tab-color: #64748b;
+        --tab-active-color: #ffffff;
+        --tab-border: rgba(255,255,255,0.05);
         --folder-active-bg: #0f172a;
         --muted-text: #94a3b8;
+        
+        --handle-bg: #1e293b;
+        --handle-text: #94a3b8;
       }
     }
 
@@ -58,13 +71,21 @@
     /* ================= 播放页 ================= */
     .play-page { position: relative; }
     .player-shell { flex: 1; position: relative; padding: 8px; overflow: hidden; display: flex; flex-direction: column; }
-    .player-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; min-height: 0; }
     
+    /* ================= 多屏布局系统 ================= */
+    .player-grid { flex: 1; display: grid; gap: 6px; min-height: 0; transition: all 0.3s ease; }
+    .player-grid.layout-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .player-grid.layout-2 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .player-grid.layout-2 .screen-card:nth-child(3), .player-grid.layout-2 .screen-card:nth-child(4) { display: none; }
+    .player-grid.layout-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .player-grid.layout-3 .screen-card:nth-child(3) { grid-column: 1 / -1; }
+    .player-grid.layout-3 .screen-card:nth-child(4) { display: none; }
+
     .screen-card { position: relative; border-radius: 12px; background: #1e293b; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
     .video-container { position: absolute; inset: 0; background: #000; overflow: hidden; }
     .video-container video { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; transition: transform 0.3s ease; }
     
-    .screen-label { position: absolute; left: 10px; top: 10px; z-index: 10; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
+    .screen-label { position: absolute; left: 10px; top: 10px; z-index: 10; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; transition: opacity 0.4s ease; }
     .screen-placeholder { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #1e293b, #0f172a); pointer-events: none; }
     .placeholder-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #94a3b8; margin-bottom: 8px; font-size: 20px; }
     .placeholder-text { font-size: 12px; color: #64748b; }
@@ -93,7 +114,7 @@
     .unlock-hint { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
     /* ================= 全局悬浮工具栏 ================= */
-    .global-toolbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 88%; max-width: 360px; height: 68px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; display: grid; grid-template-columns: repeat(4, 1fr); z-index: 40; opacity: 0.15; transition: opacity 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+    .global-toolbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; height: 68px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; display: grid; grid-template-columns: repeat(5, 1fr); z-index: 40; opacity: 0.15; transition: opacity 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
     .global-toolbar.is-awake { opacity: 1; }
     .tb-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); gap: 4px; }
     .tb-icon { width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 16px; }
@@ -101,17 +122,18 @@
 
     /* ================= 底部导航 ================= */
     .tabbar-wrapper { flex: 0 0 auto; position: relative; z-index: 30; }
-    .collapse-handle { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 60px; height: 24px; background: #1e293b; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; color: #94a3b8; box-shadow: 0 -4px 12px rgba(0,0,0,0.3); cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; transition: transform 0.2s, opacity 0.3s; }
+    .collapse-handle { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 60px; height: 24px; background: var(--handle-bg); border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; color: var(--handle-text); box-shadow: 0 -4px 12px rgba(0,0,0,0.1); cursor: pointer; border: 1px solid var(--card-border); border-bottom: none; transition: transform 0.2s, opacity 0.3s; }
     .collapse-handle svg { width: 18px; height: 18px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .app.tab-collapsed .collapse-handle svg { transform: rotate(180deg); }
     .collapse-handle:active { transform: translateX(-50%) scale(0.95); }
-    .tabbar { height: calc(var(--tab-height) + env(safe-area-inset-bottom)); background: var(--tabbar-bg); display: grid; grid-template-columns: 1fr 1fr; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+    
+    .tabbar { height: calc(var(--tab-height) + env(safe-area-inset-bottom)); background: var(--tabbar-bg); display: grid; grid-template-columns: 1fr 1fr; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid var(--tab-border); overflow: hidden; }
     .app.tab-collapsed .tabbar { height: 0; padding-bottom: 0; border-top: none; }
-    .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; font-size: 11px; gap: 4px; font-weight: 600; }
-    .tab.active { color: #fff; }
+    .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--tab-color); font-size: 11px; gap: 4px; font-weight: 600; }
+    .tab.active { color: var(--tab-active-color); }
     .tab-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
 
-    /* ================= 选片弹窗 ================= */
+    /* ================= 选片/管理 弹窗通用样式 ================= */
     .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
     .quick-sheet-overlay.show { display: flex; }
     .quick-sheet { width: 100%; background: var(--card-bg); color: var(--app-text); border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -119,17 +141,28 @@
     .qs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .qs-title { font-size: 15px; font-weight: 600; color: var(--app-text); }
     .qs-close { font-size: 20px; color: var(--muted-text); }
+    
     .qs-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .qs-item { flex: 0 0 120px; overflow: hidden; cursor: pointer; }
     .qs-thumb { width: 120px; height: 80px; border-radius: 8px; background: #334155; position: relative; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 28px; overflow: hidden; }
     .qs-name { width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--app-text); text-align: center; display: block; }
 
+    .fm-list { display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; }
+    .fm-item { display: flex; align-items: center; justify-content: space-between; background: var(--app-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--card-border); color: var(--app-text); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .fm-item:active { background: var(--card-border); }
+    .fm-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; }
+    .fm-actions { display: flex; gap: 4px; }
+    .fm-btn { width: 30px; height: 30px; border-radius: 6px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; color: var(--app-text); font-size: 14px; border: 1px solid var(--card-border); }
+    .fm-btn.danger { color: var(--red); background: #fff1f2; border-color: #fecdd3; }
+
     /* ================= 视频库 ================= */
     .library-page { color: var(--app-text); height: 100%; }
     .lib-header-wrap { flex: 0 0 auto; padding: 14px 16px 8px; background: var(--header-bg); border-bottom: 1px solid var(--header-border); text-align: center; font-size: 20px; font-weight: 800; color: var(--app-text); transition: all 0.3s; }
     .lib-content { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 12px; -webkit-overflow-scrolling: touch; }
-    .section-title { font-size: 17px; font-weight: 800; color: var(--app-text); margin-bottom: 10px; transition: color 0.3s; }
     
+    .section-title { font-size: 17px; font-weight: 800; color: var(--app-text); margin-bottom: 10px; transition: color 0.3s; display: flex; justify-content: space-between; align-items: center; }
+    .manage-btn { font-size: 13px; font-weight: normal; color: var(--blue); cursor: pointer; }
+
     .folder-strip { display: flex; gap: 10px; overflow-x: auto; padding: 1px 2px 12px; scrollbar-width: none; }
     .folder-strip::-webkit-scrollbar { display: none; }
     .folder-card { flex: 0 0 108px; height: 92px; border-radius: 13px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text); transition: all 0.3s; cursor: pointer; }
@@ -145,24 +178,60 @@
     
     .video-list-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
     .folder-current { font-size: 15px; font-weight: 800; color: var(--app-text); }
-    .sort-text { font-size: 12px; color: var(--muted-text); display: flex; align-items: center; gap: 4px; }
+    .sort-text { font-size: 12px; color: var(--muted-text); display: flex; align-items: center; gap: 12px; }
+    .btn-sort { cursor: pointer; display: flex; align-items: center; gap: 2px; }
+    .btn-view { cursor: pointer; font-size: 16px; display: flex; align-items: center; }
     
     .video-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
-    .video-item { min-height: 78px; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; transition: all 0.3s; }
-    .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
+    .video-item { border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04); padding: 8px; transition: all 0.3s; }
+    
+    /* List View (默认) */
+    .video-list:not(.grid-view) .video-item { min-height: 78px; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .video-list:not(.grid-view) .thumb { position: relative; width: 84px; height: 58px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
+    .video-list:not(.grid-view) .video-main { min-width: 0; }
+    .video-list:not(.grid-view) .video-actions { display: flex; justify-content: flex-end; margin-top: 4px;}
+    
+    /* Grid View */
+    .video-list.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .video-list.grid-view .video-item { display: flex; flex-direction: column; padding: 6px; gap: 6px; }
+    .video-list.grid-view .thumb { position: relative; width: 100%; height: 100px; border-radius: 9px; background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.82); font-size: 24px; overflow: hidden; }
+    .video-list.grid-view .video-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+    .video-list.grid-view .video-meta { font-size: 10px; margin-bottom: 2px; }
+    .video-list.grid-view .video-actions { margin-top: auto; width: 100%; }
+    .video-list.grid-view .delete-btn { width: 100%; justify-content: center; }
+
     .thumb img { width: 100%; height: 100%; object-fit: cover; }
     .thumb-duration { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,0.7); font-size: 10px; padding: 2px 4px; border-radius: 4px; color: #fff; z-index: 5;}
-    .video-main { min-width: 0; }
     .video-name { font-size: 14px; font-weight: 800; color: var(--app-text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px; }
-    .video-meta { font-size: 12px; color: var(--muted-text); margin-bottom: 7px; }
-    .video-actions { display: flex; justify-content: flex-end; }
+    .video-meta { font-size: 12px; color: var(--muted-text); margin-bottom: 2px; }
+    
     .delete-btn { height: 28px; border-radius: 8px; padding: 0 9px; font-size: 12px; font-weight: 700; color: var(--red); background: #fff1f2; border: 1px solid #fecdd3; display: flex; align-items: center; gap: 4px; }
 
     .toast { position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; }
-    
-    /* 加载更多指示器 */
     .loading-more { text-align: center; padding: 15px; font-size: 12px; color: var(--muted-text); display: none; }
     .loading-more.show { display: block; }
+
+    /* ================= 优化点4：物理横屏响应式适配 ================= */
+    @media (orientation: landscape) {
+      /* 将整体布局转化为水平侧边栏结构，最大化利用高度 */
+      .app { flex-direction: row; }
+      
+      /* 将导航栏移动到最左侧（或右侧） */
+      .tabbar-wrapper { height: 100%; width: 66px; flex: 0 0 auto; }
+      .tabbar { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; border-top: none; border-right: 1px solid var(--tab-border); }
+      .collapse-handle { display: none; } /* 横屏时完全不需要收起手柄 */
+
+      /* 紧凑化全局工具栏 */
+      .global-toolbar { width: 85%; height: 52px; top: 6px; }
+      
+      /* 紧凑化单屏控制栏，防止在横屏高度下遮挡过多视频 */
+      .screen-controls { padding: 6px; gap: 4px; }
+      .qm-btn.play { width: 30px; height: 30px; font-size: 16px; }
+      .qm-util { font-size: 10px; padding: 2px 6px; }
+      
+      /* 优化视频库的弹窗高度 */
+      .quick-sheet { max-height: 85vh; overflow-y: auto; }
+    }
   </style>
 </head>
 
@@ -171,19 +240,23 @@
     <section id="playPage" class="page play-page active">
       <main class="player-shell">
         <div class="global-toolbar is-idle" id="globalToolbar">
+          <button class="tb-btn" id="tbLayout"><div class="tb-icon" id="iconLayout"></div><div class="tb-text" id="textLayout">四屏</div></button>
           <button class="tb-btn" id="tbPlayAll"><div class="tb-icon" id="iconPlayAll"></div><div class="tb-text">全部播放</div></button>
           <button class="tb-btn" id="tbMuteAll"><div class="tb-icon" id="iconMuteAll"></div><div class="tb-text">全部静音</div></button>
           <button class="tb-btn" id="tbLock"><div class="tb-icon" id="iconLock"></div><div class="tb-text">锁定</div></button>
           <button class="tb-btn" id="tbClear"><div class="tb-icon" id="iconClear"></div><div class="tb-text">清空</div></button>
         </div>
-        <div class="player-grid" id="playerGrid"></div>
+        <div class="player-grid layout-4" id="playerGrid"></div>
       </main>
     </section>
 
     <section id="libraryPage" class="page library-page">
       <header class="lib-header-wrap">视频库</header>
       <main class="lib-content" id="libContentScroll">
-        <div class="section-title">文件夹</div>
+        <div class="section-title">
+          <span>文件夹</span>
+          <span class="manage-btn" id="btnManageFolders">管理</span>
+        </div>
         <div class="folder-strip" id="folderStrip"></div>
         
         <div class="library-actions">
@@ -199,8 +272,8 @@
         <div class="video-list-head">
           <div class="folder-current" id="libVideoTitle">全部视频 · 0 个视频</div>
           <div class="sort-text">
-            按名称 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span class="btn-sort" id="btnSortDropdown"><span id="currentSortText">按最新</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
+            <span class="btn-view" id="btnViewToggle"></span>
           </div>
         </div>
         
@@ -245,25 +318,57 @@
       </div>
     </div>
 
+    <div class="quick-sheet-overlay" id="sortSheetOverlay">
+      <div class="quick-sheet">
+        <div class="qs-header">
+          <div class="qs-title">选择排序方式</div>
+          <button class="qs-close" id="sortClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="fm-list">
+          <div class="fm-item" data-sort="timeDesc">按最新</div>
+          <div class="fm-item" data-sort="timeAsc">按最早</div>
+          <div class="fm-item" data-sort="nameAsc">按名称 A-Z</div>
+          <div class="fm-item" data-sort="nameDesc">按名称 Z-A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-sheet-overlay" id="folderManageOverlay">
+      <div class="quick-sheet">
+        <div class="qs-header">
+          <div class="qs-title">管理文件夹</div>
+          <button class="qs-close" id="fmClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="fm-list" id="fmList"></div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
   </div>
 
   <script>
     // =======================
-    // 核心架构：分离数据库
+    // 核心架构：分离数据库 (升级V19支持文件夹独立排序)
     // =======================
-    const DB_NAME = 'video_lib_v17'; // 全新架构数据库，彻底抛弃旧版单表存储
+    const DB_NAME = 'video_lib_v19'; 
     let db = null;
     
-    // 状态管理
     let folders = [];
     let currentFolderId = 'default';
     let isLocked = false;
     let globalMuted = true;
     let pendingScreenIndex = null;
     let qsFolderId = 'default';
+    let currentLayout = 4;
+    let viewMode = 'list'; // list, grid
     let toastTimer, toolbarTimer;
     const players = [];
+
+    const SORT_LABELS = { timeDesc: '按最新', timeAsc: '按最早', nameAsc: '按名称 A-Z', nameDesc: '按名称 Z-A' };
 
     // =======================
     // 一致性风格的 SVG 图标库
@@ -283,7 +388,15 @@
       plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
       folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
       film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>',
-      speed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+      speed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+      layout4: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+      layout2: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7"></rect><rect x="3" y="14" width="18" height="7"></rect></svg>',
+      layout3: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="18" height="7"></rect></svg>',
+      grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+      list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+      edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
+      up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
+      down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>'
     };
 
     const UI = {
@@ -307,7 +420,18 @@
       lockMask: document.getElementById('lockMask'),
       btnUnlock: document.getElementById('btnUnlock'),
       libContentScroll: document.getElementById('libContentScroll'),
-      loadingMore: document.getElementById('loadingMore')
+      loadingMore: document.getElementById('loadingMore'),
+      iconLayout: document.getElementById('iconLayout'),
+      textLayout: document.getElementById('textLayout'),
+      btnSortDropdown: document.getElementById('btnSortDropdown'),
+      currentSortText: document.getElementById('currentSortText'),
+      btnViewToggle: document.getElementById('btnViewToggle'),
+      btnManageFolders: document.getElementById('btnManageFolders'),
+      folderManageOverlay: document.getElementById('folderManageOverlay'),
+      fmList: document.getElementById('fmList'),
+      fmClose: document.getElementById('fmClose'),
+      sortSheetOverlay: document.getElementById('sortSheetOverlay'),
+      sortClose: document.getElementById('sortClose')
     };
 
     function showToast(msg) {
@@ -328,39 +452,28 @@
     }
 
     document.getElementById('iconClear').innerHTML = ICONS.trash;
+    UI.iconLayout.innerHTML = ICONS.layout4;
+    UI.btnViewToggle.innerHTML = ICONS.grid;
 
     // =======================
-    // 底层数据库工具 (拆分架构)
+    // 底层数据库工具
     // =======================
-    function getStore(storeName, mode = 'readonly') {
-      return db.transaction([storeName], mode).objectStore(storeName);
-    }
+    function getStore(storeName, mode = 'readonly') { return db.transaction([storeName], mode).objectStore(storeName); }
     function getRecord(storeName, id) {
       return new Promise((resolve, reject) => {
-        const req = getStore(storeName).get(id);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => reject(req.error);
+        const req = getStore(storeName).get(id); req.onsuccess = () => resolve(req.result || null); req.onerror = () => reject(req.error);
       });
     }
     function putRecord(storeName, value) {
       return new Promise((resolve, reject) => {
-        const req = getStore(storeName, 'readwrite').put(value);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        const req = getStore(storeName, 'readwrite').put(value); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error);
       });
     }
     function txDone(tx) {
-      return new Promise((resolve, reject) => {
-        tx.oncomplete = resolve;
-        tx.onerror = () => reject(tx.error);
-        tx.onabort = () => reject(tx.error);
-      });
+      return new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error); });
     }
     function idbRequest(request) {
-      return new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
+      return new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
     }
 
     async function initDB() {
@@ -368,35 +481,26 @@
         const req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = e => {
           const database = e.target.result;
-          if (!database.objectStoreNames.contains('folders')) {
-            database.createObjectStore('folders', { keyPath: 'id' });
-          }
+          if (!database.objectStoreNames.contains('folders')) database.createObjectStore('folders', { keyPath: 'id' });
           if (!database.objectStoreNames.contains('video_meta')) {
             const metaStore = database.createObjectStore('video_meta', { keyPath: 'id' });
             metaStore.createIndex('folderId', 'folderId', { unique: false });
             metaStore.createIndex('createdAt', 'createdAt', { unique: false });
             metaStore.createIndex('folderId_createdAt', ['folderId', 'createdAt'], { unique: false });
           }
-          if (!database.objectStoreNames.contains('video_blob')) {
-            database.createObjectStore('video_blob', { keyPath: 'id' });
-          }
-          if (!database.objectStoreNames.contains('video_thumb')) {
-            database.createObjectStore('video_thumb', { keyPath: 'id' });
-          }
+          if (!database.objectStoreNames.contains('video_blob')) database.createObjectStore('video_blob', { keyPath: 'id' });
+          if (!database.objectStoreNames.contains('video_thumb')) database.createObjectStore('video_thumb', { keyPath: 'id' });
         };
         req.onsuccess = async () => {
           db = req.result;
           const defaultFolder = await getRecord('folders', 'default');
-          if(!defaultFolder) await putRecord('folders', {id:'default', name:'默认文件夹', createdAt:Date.now()});
+          if(!defaultFolder) await putRecord('folders', {id:'default', name:'默认文件夹', sortMode: 'timeDesc', order: 0, createdAt:Date.now()});
           resolve();
         };
         req.onerror = () => reject(req.error);
       });
     }
 
-    // =======================
-    // 存储空间检测
-    // =======================
     async function checkStorageBeforeImport(files) {
         if (!navigator.storage || !navigator.storage.estimate) return;
         const estimate = await navigator.storage.estimate();
@@ -410,20 +514,16 @@
     }
 
     // =======================
-    // 封面单线程生成队列
+    // 封面提取 (5%)
     // =======================
-    function canvasToBlob(canvas, mime = 'image/jpeg', quality = 0.65) {
-      return new Promise(resolve => canvas.toBlob(resolve, mime, quality));
-    }
+    function canvasToBlob(canvas, mime = 'image/jpeg', quality = 0.65) { return new Promise(resolve => canvas.toBlob(resolve, mime, quality)); }
 
     async function generateThumbnail(fileBlob) {
         return new Promise((resolve) => {
             const video = document.createElement('video');
             video.style.display = 'none';
-            video.muted = true;
-            video.playsInline = true;
-            video.autoplay = true; 
-            document.body.appendChild(video); // 隐式挂载解决iOS Safari懒渲染问题
+            video.muted = true; video.playsInline = true; video.autoplay = true; 
+            document.body.appendChild(video); 
 
             const url = URL.createObjectURL(fileBlob);
             video.src = url;
@@ -441,8 +541,7 @@
             const timeout = setTimeout(() => cleanup(null), 4000);
 
             video.addEventListener('loadeddata', () => {
-                try { video.currentTime = (video.duration && video.duration > 2) ? 1 : Math.max(0, (video.duration || 0) * 0.1); } 
-                catch(e) { cleanup(null); }
+                try { video.currentTime = Math.max(0.1, (video.duration || 0) * 0.05); } catch(e) { cleanup(null); }
             });
 
             video.addEventListener('seeked', async () => {
@@ -450,17 +549,11 @@
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 240;
                     const scale = Math.min(MAX_WIDTH / (video.videoWidth || MAX_WIDTH), 1);
-                    canvas.width = (video.videoWidth || 240) * scale;
-                    canvas.height = (video.videoHeight || 135) * scale;
-                    
+                    canvas.width = (video.videoWidth || 240) * scale; canvas.height = (video.videoHeight || 135) * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
                     const blob = await canvasToBlob(canvas, 'image/jpeg', 0.65);
-                    cleanup({
-                        blob, width: canvas.width, height: canvas.height, mime: 'image/jpeg',
-                        duration: video.duration || 0, widthRaw: video.videoWidth || 0, heightRaw: video.videoHeight || 0
-                    });
+                    cleanup({ blob, width: canvas.width, height: canvas.height, mime: 'image/jpeg', duration: video.duration || 0, widthRaw: video.videoWidth || 0, heightRaw: video.videoHeight || 0 });
                 } catch(e) { cleanup(null); }
             });
             video.addEventListener('error', () => cleanup(null));
@@ -489,30 +582,20 @@
 
                 const blobRecord = await getRecord('video_blob', meta.blobId);
                 if (!blobRecord || !blobRecord.blob) {
-                    meta.thumbStatus = 'failed';
-                    await putRecord('video_meta', meta);
-                    continue;
+                    meta.thumbStatus = 'failed'; await putRecord('video_meta', meta); continue;
                 }
 
                 const thumbData = await generateThumbnail(blobRecord.blob);
                 
                 if (thumbData && thumbData.blob) {
-                    await putRecord('video_thumb', {
-                        id: meta.thumbId, blob: thumbData.blob, width: thumbData.width, 
-                        height: thumbData.height, mime: thumbData.mime, createdAt: Date.now()
-                    });
-                    meta.hasThumb = true;
-                    meta.thumbStatus = 'done';
-                    meta.duration = thumbData.duration;
-                    meta.width = thumbData.widthRaw;
-                    meta.height = thumbData.heightRaw;
+                    await putRecord('video_thumb', { id: meta.thumbId, blob: thumbData.blob, width: thumbData.width, height: thumbData.height, mime: thumbData.mime, createdAt: Date.now() });
+                    meta.hasThumb = true; meta.thumbStatus = 'done'; meta.duration = thumbData.duration; meta.width = thumbData.widthRaw; meta.height = thumbData.heightRaw;
                 } else {
                     meta.thumbStatus = 'failed';
                 }
                 meta.updatedAt = Date.now();
                 await putRecord('video_meta', meta);
 
-                // 生成完毕，更新视窗内的封面
                 const thumbEls = document.querySelectorAll(`.thumb[data-video-id="${videoId}"]`);
                 thumbEls.forEach(el => loadThumbForElement(videoId, el));
                 const qsThumbEls = document.querySelectorAll(`.qs-thumb[data-video-id="${videoId}"]`);
@@ -522,34 +605,27 @@
                 let meta = await getRecord('video_meta', videoId);
                 if (meta) { meta.thumbStatus = 'failed'; await putRecord('video_meta', meta); }
             }
-            await new Promise(r => setTimeout(r, 100)); // Sleep防止阻塞
+            await new Promise(r => setTimeout(r, 100));
         }
         thumbQueue.running = false;
     }
 
-    // =======================
-    // 封面 LRU 缓存与按需加载
-    // =======================
     const thumbUrlCache = new Map();
     const MAX_THUMB_URL_CACHE = 80;
 
     async function getThumbUrl(thumbId) {
         if (thumbUrlCache.has(thumbId)) {
             const old = thumbUrlCache.get(thumbId);
-            thumbUrlCache.delete(thumbId);
-            thumbUrlCache.set(thumbId, old);
-            return old;
+            thumbUrlCache.delete(thumbId); thumbUrlCache.set(thumbId, old); return old;
         }
         const thumbRecord = await getRecord('video_thumb', thumbId);
         if (!thumbRecord || !thumbRecord.blob) return null;
 
         const url = URL.createObjectURL(thumbRecord.blob);
         thumbUrlCache.set(thumbId, url);
-
         if (thumbUrlCache.size > MAX_THUMB_URL_CACHE) {
             const firstKey = thumbUrlCache.keys().next().value;
-            URL.revokeObjectURL(thumbUrlCache.get(firstKey));
-            thumbUrlCache.delete(firstKey);
+            URL.revokeObjectURL(thumbUrlCache.get(firstKey)); thumbUrlCache.delete(firstKey);
         }
         return url;
     }
@@ -557,10 +633,8 @@
     async function loadThumbForElement(videoId, el) {
         const meta = await getRecord('video_meta', videoId);
         if (!meta || !meta.hasThumb || !meta.thumbId) return;
-        
         const url = await getThumbUrl(meta.thumbId);
         if (!url) return;
-
         el.innerHTML = `<img src="${url}" alt="封面"> <span class="thumb-duration">${formatTime(meta.duration)}</span>`;
     }
 
@@ -575,14 +649,44 @@
     }, { threshold: 0.1 });
 
     // =======================
-    // 视频库列表分页与渲染
+    // 列表分页与排序逻辑 (优化点3)
     // =======================
     const videoPageState = { folderId: 'default', pageSize: 30, offset: 0, hasMore: true, loading: false, list: [] };
 
+    UI.btnSortDropdown.addEventListener('click', () => UI.sortSheetOverlay.classList.add('show'));
+    UI.sortClose.addEventListener('click', () => UI.sortSheetOverlay.classList.remove('show'));
+
+    document.querySelectorAll('#sortSheetOverlay .fm-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const mode = item.dataset.sort;
+            const folder = folders.find(f => f.id === currentFolderId);
+            if (folder) {
+                folder.sortMode = mode;
+                await putRecord('folders', folder);
+            }
+            UI.currentSortText.textContent = SORT_LABELS[mode];
+            UI.sortSheetOverlay.classList.remove('show');
+            loadFirstPage(currentFolderId);
+        });
+    });
+
+    UI.btnViewToggle.addEventListener('click', () => {
+        viewMode = viewMode === 'list' ? 'grid' : 'list';
+        UI.btnViewToggle.innerHTML = viewMode === 'list' ? ICONS.grid : ICONS.list;
+        if (viewMode === 'grid') UI.libVideoList.classList.add('grid-view');
+        else UI.libVideoList.classList.remove('grid-view');
+    });
+
     async function queryVideoMetaPage(folderId, offset = 0, limit = 30) {
-        // 由于 meta 表非常轻量，为了严谨支持多端排序，采用读取特定文件夹全部 meta 后切片
+        const folder = folders.find(f => f.id === folderId) || {};
+        const mode = folder.sortMode || 'timeDesc';
         const allMetas = await idbRequest(db.transaction('video_meta').objectStore('video_meta').index('folderId').getAll(folderId));
-        allMetas.sort((a,b) => b.createdAt - a.createdAt);
+        
+        if (mode === 'timeDesc') allMetas.sort((a,b) => b.createdAt - a.createdAt);
+        else if (mode === 'timeAsc') allMetas.sort((a,b) => a.createdAt - b.createdAt);
+        else if (mode === 'nameAsc') allMetas.sort((a,b) => a.name.localeCompare(b.name, 'zh'));
+        else if (mode === 'nameDesc') allMetas.sort((a,b) => b.name.localeCompare(a.name, 'zh'));
+        
         return allMetas.slice(offset, offset + limit);
     }
 
@@ -593,10 +697,7 @@
         videoPageState.list = [];
         UI.libVideoList.innerHTML = '';
         
-        folders = await idbRequest(db.transaction('folders').objectStore('folders').getAll());
-        folders.sort((a,b) => a.createdAt - b.createdAt);
-        await renderFolders();
-
+        await refreshAllFolders();
         await loadNextPage();
     }
 
@@ -617,14 +718,16 @@
         videoPageState.loading = false;
     }
 
-    // 滚动触底加载
     UI.libContentScroll.addEventListener('scroll', () => {
         const nearBottom = UI.libContentScroll.scrollTop + UI.libContentScroll.clientHeight >= UI.libContentScroll.scrollHeight - 160;
         if (nearBottom) loadNextPage();
     });
 
-    async function renderFolders() {
-        // 极速获取 meta count
+    async function refreshAllFolders() {
+        folders = await idbRequest(db.transaction('folders').objectStore('folders').getAll());
+        folders.forEach((f, i) => { if (typeof f.order === 'undefined') f.order = i; });
+        folders.sort((a,b) => a.order - b.order);
+
         const metaList = await idbRequest(db.transaction('video_meta').objectStore('video_meta').getAll());
         const counts = {};
         metaList.forEach(m => { counts[m.folderId] = (counts[m.folderId] || 0) + 1; });
@@ -641,9 +744,10 @@
         const currentFolder = folders.find(f => f.id === currentFolderId) || {name: '默认文件夹'};
         const totalInFolder = counts[currentFolderId] || 0;
         UI.libVideoTitle.textContent = `${currentFolder.name} · ${totalInFolder} 个视频`;
+        UI.currentSortText.textContent = SORT_LABELS[currentFolder.sortMode || 'timeDesc'];
         
         if (totalInFolder === 0) {
-            UI.libVideoList.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted-text); font-size:13px;">当前文件夹为空</div>`;
+            UI.libVideoList.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted-text); font-size:13px; grid-column:1/-1;">当前文件夹为空</div>`;
         }
     }
 
@@ -674,10 +778,93 @@
             const thumbEl = item.querySelector('.thumb');
             thumbObserver.observe(thumbEl);
 
-            // 若封面未生成，推入后台队列
             if (!meta.hasThumb && meta.thumbStatus !== 'processing') {
                 enqueueThumb(meta.id);
             }
+        });
+    }
+
+    // =======================
+    // 文件夹管理功能 (重排/重命名/删除)
+    // =======================
+    UI.btnManageFolders.addEventListener('click', () => {
+        renderFolderManageList();
+        UI.folderManageOverlay.classList.add('show');
+    });
+    UI.fmClose.addEventListener('click', () => UI.folderManageOverlay.classList.remove('show'));
+
+    async function renderFolderManageList() {
+        UI.fmList.innerHTML = '';
+        folders.sort((a, b) => a.order - b.order);
+        
+        folders.forEach((f, index) => {
+            const item = document.createElement('div');
+            item.className = 'fm-item';
+            const isDefault = f.id === 'default';
+            
+            let upBtn = `<button class="fm-btn" data-action="up">${ICONS.up}</button>`;
+            let downBtn = `<button class="fm-btn" data-action="down">${ICONS.down}</button>`;
+            let renameBtn = isDefault ? '' : `<button class="fm-btn" data-action="rename">${ICONS.edit}</button>`;
+            let delBtn = isDefault ? '' : `<button class="fm-btn danger" data-action="del">${ICONS.trash}</button>`;
+
+            if(index === 0) upBtn = `<button class="fm-btn" disabled style="opacity:0.3">${ICONS.up}</button>`;
+            if(index === folders.length - 1) downBtn = `<button class="fm-btn" disabled style="opacity:0.3">${ICONS.down}</button>`;
+
+            item.innerHTML = `
+                ${ICONS.folder}
+                <div class="fm-item-name">${escapeHtml(f.name)}</div>
+                <div class="fm-actions">
+                    ${upBtn}
+                    ${downBtn}
+                    ${renameBtn}
+                    ${delBtn}
+                </div>
+            `;
+
+            if (!isDefault) {
+                item.querySelector('[data-action="rename"]').addEventListener('click', async () => {
+                    const newName = prompt('重命名文件夹', f.name);
+                    if (newName && newName.trim()) {
+                        f.name = newName.trim();
+                        await putRecord('folders', f);
+                        await refreshAllFolders();
+                        renderFolderManageList();
+                    }
+                });
+                item.querySelector('[data-action="del"]').addEventListener('click', async () => {
+                    if (confirm(`确定删除文件夹「${f.name}」吗？（内部所有视频将被永久清空！）`)) {
+                        const tx = db.transaction('video_meta');
+                        const metas = await idbRequest(tx.objectStore('video_meta').index('folderId').getAll(f.id));
+                        for (let m of metas) {
+                            await deleteVideo(m.id, true);
+                        }
+                        await db.transaction('folders', 'readwrite').objectStore('folders').delete(f.id);
+                        if (currentFolderId === f.id) currentFolderId = 'default';
+                        await refreshAllFolders();
+                        renderFolderManageList();
+                        loadFirstPage(currentFolderId);
+                        showToast('文件夹及视频已删除');
+                    }
+                });
+            }
+            
+            const upEl = item.querySelector('[data-action="up"]');
+            if(upEl) upEl.addEventListener('click', async () => {
+                const prev = folders[index - 1];
+                const tempOrder = f.order; f.order = prev.order; prev.order = tempOrder;
+                await putRecord('folders', f); await putRecord('folders', prev);
+                await refreshAllFolders(); renderFolderManageList();
+            });
+
+            const downEl = item.querySelector('[data-action="down"]');
+            if(downEl) downEl.addEventListener('click', async () => {
+                const next = folders[index + 1];
+                const tempOrder = f.order; f.order = next.order; next.order = tempOrder;
+                await putRecord('folders', f); await putRecord('folders', next);
+                await refreshAllFolders(); renderFolderManageList();
+            });
+
+            UI.fmList.appendChild(item);
         });
     }
 
@@ -695,7 +882,6 @@
     UI.qsClose.addEventListener('click', () => UI.qsOverlay.classList.remove('show'));
 
     async function renderQuickPickerList() {
-      // 获取文件夹分类（复用 metaList 方案）
       const metaList = await idbRequest(db.transaction('video_meta').objectStore('video_meta').getAll());
       const counts = {};
       metaList.forEach(m => { counts[m.folderId] = (counts[m.folderId] || 0) + 1; });
@@ -709,7 +895,6 @@
         UI.qsFolderStrip.appendChild(el);
       });
 
-      // 获取前 30 个视频进行渲染
       const page = await queryVideoMetaPage(qsFolderId, 0, 30);
       UI.qsVideoList.innerHTML = page.length ? '' : `<div style="color:var(--muted-text); padding:20px; font-size:13px; text-align:center; width:100%;">当前文件夹暂无视频</div>`;
       
@@ -724,7 +909,6 @@
         });
         UI.qsVideoList.appendChild(item);
         
-        // 懒加载缩略图
         const thumbEl = item.querySelector('.qs-thumb');
         thumbObserver.observe(thumbEl);
         if (!meta.hasThumb && meta.thumbStatus !== 'processing') enqueueThumb(meta.id);
@@ -732,7 +916,7 @@
     }
 
     // =======================
-    // 四屏播放器逻辑 (引入按需读取blob机制)
+    // 四屏播放器逻辑
     // =======================
     function initPlayers() {
       for(let i=0; i<4; i++) {
@@ -771,6 +955,7 @@
 
         const player = {
           index: i, card: div, video: div.querySelector('video'),
+          label: div.querySelector('.screen-label'),
           placeholder: div.querySelector('.screen-placeholder'),
           tapLayer: div.querySelector('.tap-layer'),
           controls: div.querySelector('.screen-controls'),
@@ -861,7 +1046,10 @@
         player.video.muted = globalMuted;
         player.video.play().catch(()=>{});
 
+        // 优化点2：沉浸式播放，隐藏Label和占位符
         player.placeholder.style.display = 'none';
+        player.label.style.opacity = '0';
+
         player.controls.classList.add('active'); 
         clearTimeout(player.hideTimer);
         player.hideTimer = setTimeout(()=> player.controls.classList.remove('active'), 5000);
@@ -874,7 +1062,9 @@
         updateGlobalIcons();
     }
 
-    // --- 全局控制与锁屏 ---
+    // =======================
+    // 全局工具栏与锁屏
+    // =======================
     document.getElementById('tbLock').addEventListener('click', () => {
       isLocked = true; UI.app.classList.add('is-locked'); 
       updateGlobalIcons(); showToast('界面已锁定');
@@ -903,8 +1093,27 @@
       clearTimeout(toolbarTimer); toolbarTimer = setTimeout(() => UI.globalToolbar.classList.remove('is-awake'), 3000);
     }, true);
 
+    document.getElementById('tbLayout').addEventListener('click', () => {
+        currentLayout = currentLayout === 4 ? 2 : (currentLayout === 2 ? 3 : 4);
+        UI.playerGrid.className = `player-grid layout-${currentLayout}`;
+        
+        if (currentLayout === 4) {
+            UI.iconLayout.innerHTML = ICONS.layout4; UI.textLayout.textContent = '四屏';
+        } else if (currentLayout === 2) {
+            UI.iconLayout.innerHTML = ICONS.layout2; UI.textLayout.textContent = '二屏';
+            players.slice(2).forEach(p => { if(p.file) { p.video.pause(); p.btnPlay.innerHTML = ICONS.play; } });
+        } else if (currentLayout === 3) {
+            UI.iconLayout.innerHTML = ICONS.layout3; UI.textLayout.textContent = '三屏';
+            players.slice(3).forEach(p => { if(p.file) { p.video.pause(); p.btnPlay.innerHTML = ICONS.play; } });
+        }
+        updateGlobalIcons();
+        showToast(`已切换至${UI.textLayout.textContent}布局`);
+    });
+
     function updateGlobalIcons() {
-      const anyPlaying = players.some(p => p.file && !p.video.paused);
+      const visiblePlayers = players.filter(p => !(currentLayout === 2 && p.index >= 2) && !(currentLayout === 3 && p.index >= 3));
+      const anyPlaying = visiblePlayers.some(p => p.file && !p.video.paused);
+      
       document.getElementById('iconPlayAll').innerHTML = anyPlaying ? ICONS.pause : ICONS.play;
       document.getElementById('tbPlayAll').querySelector('.tb-text').textContent = anyPlaying ? '全部暂停' : '全部播放';
       document.getElementById('iconMuteAll').innerHTML = globalMuted ? ICONS.mute : ICONS.unmute;
@@ -913,8 +1122,10 @@
     }
 
     document.getElementById('tbPlayAll').addEventListener('click', () => {
-      const anyPlaying = players.some(p => p.file && !p.video.paused);
-      players.forEach(p => {
+      const visiblePlayers = players.filter(p => !(currentLayout === 2 && p.index >= 2) && !(currentLayout === 3 && p.index >= 3));
+      const anyPlaying = visiblePlayers.some(p => p.file && !p.video.paused);
+      
+      visiblePlayers.forEach(p => {
         if(p.file) {
           if(anyPlaying) p.video.pause(); else { p.video.muted = globalMuted; p.video.play(); }
           p.btnPlay.innerHTML = p.video.paused ? ICONS.play : ICONS.pause;
@@ -936,7 +1147,9 @@
         p.video.removeAttribute('src'); p.video.load();
         p.video.style.transform = 'none'; p.isRotated = false;
         p.btnFit.innerHTML = `${ICONS.rotate} <span>横屏</span>`;
-        p.placeholder.style.display = 'flex'; p.controls.classList.remove('active');
+        p.placeholder.style.display = 'flex';
+        p.label.style.opacity = '1'; // 优化点2：清空后恢复Label
+        p.controls.classList.remove('active');
       });
       updateGlobalIcons(); showToast('已清空全部屏幕');
     });
@@ -957,12 +1170,13 @@
     });
 
     // =======================
-    // 数据维护 (增加、删除)
+    // 增加与删除视频
     // =======================
     document.getElementById('btnNewFolder').addEventListener('click', async () => {
       const name = prompt('文件夹名称');
       if(name && name.trim()) {
-        await putRecord('folders', { id: 'f_'+Date.now(), name: name.trim(), createdAt: Date.now() });
+        const order = folders.length > 0 ? folders[folders.length - 1].order + 1 : 0;
+        await putRecord('folders', { id: 'f_'+Date.now(), name: name.trim(), sortMode: 'timeDesc', order, createdAt: Date.now() });
         loadFirstPage(currentFolderId);
       }
     });
@@ -971,9 +1185,7 @@
       const files = Array.from(e.target.files);
       if(!files.length) return;
       
-      try {
-        await checkStorageBeforeImport(files);
-      } catch (err) { return; }
+      try { await checkStorageBeforeImport(files); } catch (err) { return; }
 
       showToast(`开始导入 ${files.length} 个视频...`);
       
@@ -994,18 +1206,16 @@
               enqueueThumb(videoId);
           } catch (error) {
               if (error.name === 'QuotaExceededError') {
-                  showToast('存储空间不足，部分视频导入失败');
-                  break;
+                  showToast('存储空间不足，部分视频导入失败'); break;
               }
           }
       }
-      
       e.target.value = ''; 
       await loadFirstPage(currentFolderId); 
       showToast(`导入完成，后台静默生成封面中`); 
     });
 
-    async function deleteVideo(videoId) {
+    async function deleteVideo(videoId, silentMode = false) {
         const meta = await getRecord('video_meta', videoId);
         if (!meta) return;
 
@@ -1018,22 +1228,31 @@
             if (url) { URL.revokeObjectURL(url); thumbUrlCache.delete(meta.thumbId); }
         }
         await txDone(tx);
-        showToast('视频已删除');
         
-        // 如果删除的是播放器里正在播放的视频，则清空该屏
+        if (!silentMode) showToast('视频已删除');
+        
         players.forEach(p => {
            if (p.file && p.file.name === meta.name) { 
                p.video.pause(); p.file = null; 
                if(p.url) URL.revokeObjectURL(p.url); 
-               p.video.removeAttribute('src'); p.placeholder.style.display = 'flex';
+               p.video.removeAttribute('src'); 
+               p.placeholder.style.display = 'flex';
+               p.label.style.opacity = '1'; // 恢复Label
                p.controls.classList.remove('active');
            } 
         });
         
-        loadFirstPage(currentFolderId);
+        if (!silentMode) loadFirstPage(currentFolderId);
     }
 
-    initDB().then(() => { initPlayers(); loadFirstPage(currentFolderId); updateGlobalIcons(); });
+    initDB().then(() => { 
+        initPlayers(); 
+        loadFirstPage(currentFolderId); 
+        updateGlobalIcons(); 
+        
+        // 尝试锁定横竖屏以增强横屏体验稳定性
+        try { if(screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(()=>{}); } catch(e){}
+    });
   </script>
 </body>
 </html>
