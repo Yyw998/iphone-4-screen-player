@@ -65,6 +65,12 @@
     .page { flex: 1; min-height: 0; display: none; flex-direction: column; overflow: hidden; }
     .page.active { display: flex; }
 
+    /* ================= 导入队列进度条UI ================= */
+    .import-progress-overlay { position: fixed; top: env(safe-area-inset-top); left: 10%; right: 10%; z-index: 2000; background: rgba(11, 115, 255, 0.95); color: white; padding: 12px 16px; text-align: center; font-size: 13px; font-weight: bold; border-radius: 0 0 16px 16px; transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 8px 24px rgba(11, 115, 255, 0.2); pointer-events: none; }
+    .import-progress-overlay.show { transform: translateY(0); }
+    .import-progress-bar { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+    .import-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.2s; }
+
     /* ================= 播放页 ================= */
     .play-page { position: relative; }
     .player-shell { flex: 1; position: relative; padding: 8px; overflow: hidden; display: flex; flex-direction: column; }
@@ -130,7 +136,7 @@
     .tab.active { color: var(--tab-active-color); }
     .tab-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
 
-    /* ================= 选片/管理/投屏 弹窗通用样式 ================= */
+    /* ================= 选片/管理 弹窗通用样式 ================= */
     .quick-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; }
     .quick-sheet-overlay.show { display: flex; }
     .quick-sheet { width: 100%; background: var(--card-bg); color: var(--app-text); border-radius: 20px 20px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -152,7 +158,7 @@
     .fm-btn { width: 30px; height: 30px; border-radius: 6px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; color: var(--app-text); font-size: 14px; border: 1px solid var(--card-border); }
     .fm-btn.danger { color: var(--red); background: #fff1f2; border-color: #fecdd3; }
 
-    /* 优化点2：投放到屏幕UI */
+    /* 投屏UI */
     .screen-select-list { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); padding-bottom: 8px; }
     .screen-select-btn { background: var(--app-bg); border: 1px solid var(--blue); color: var(--blue); border-radius: 12px; padding: 16px; font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s; cursor: pointer; }
     .screen-select-btn:active { background: var(--blue); color: #fff; }
@@ -214,7 +220,7 @@
     .loading-more { text-align: center; padding: 15px; font-size: 12px; color: var(--muted-text); display: none; }
     .loading-more.show { display: block; }
 
-    /* ================= 优化点1：物理横屏响应式适配 ================= */
+    /* ================= 物理横屏响应式适配 ================= */
     @media (orientation: landscape) {
       .global-toolbar { width: 85%; height: 52px; top: 6px; }
       .screen-controls { padding: 6px; gap: 4px; }
@@ -227,6 +233,11 @@
 
 <body>
   <div class="app" id="app">
+    <div class="import-progress-overlay" id="importProgressOverlay">
+      <div id="importProgressText">正在导入 0 / 0</div>
+      <div class="import-progress-bar"><div class="import-progress-fill" id="importProgressFill"></div></div>
+    </div>
+
     <section id="playPage" class="page play-page active">
       <main class="player-shell">
         <div class="global-toolbar is-idle" id="globalToolbar">
@@ -356,7 +367,7 @@
     // =======================
     // 核心架构：分离数据库
     // =======================
-    const DB_NAME = 'video_lib_v19'; 
+    const DB_NAME = 'video_lib_v20'; 
     let db = null;
     
     let folders = [];
@@ -364,7 +375,7 @@
     let isLocked = false;
     let globalMuted = true;
     let pendingScreenIndex = null;
-    let pendingCastVideoId = null; // 投屏选择视频ID缓存
+    let pendingCastVideoId = null; 
     let qsFolderId = 'default';
     let currentLayout = 4;
     let viewMode = 'list';
@@ -437,7 +448,10 @@
       sortClose: document.getElementById('sortClose'),
       screenSelectOverlay: document.getElementById('screenSelectOverlay'),
       screenSelectClose: document.getElementById('screenSelectClose'),
-      screenSelectList: document.getElementById('screenSelectList')
+      screenSelectList: document.getElementById('screenSelectList'),
+      importOverlay: document.getElementById('importProgressOverlay'),
+      importText: document.getElementById('importProgressText'),
+      importFill: document.getElementById('importProgressFill')
     };
 
     function showToast(msg) {
@@ -775,7 +789,6 @@
               </div>
             `;
             
-            // 优化点2：从视频库列表点击，弹出投屏选择
             item.addEventListener('click', (e) => {
                 if (e.target.closest('.delete-btn')) return;
                 openScreenSelectPopup(meta.id);
@@ -815,7 +828,6 @@
                 UI.screenSelectOverlay.classList.remove('show');
                 loadVideoToScreen(i, pendingCastVideoId);
                 
-                // 切换回播放页
                 UI.playPage.classList.add('active'); UI.libPage.classList.remove('active');
                 UI.tabPlay.classList.add('active'); UI.tabLib.classList.remove('active');
                 UI.collapseHandle.style.opacity = '1'; UI.collapseHandle.style.pointerEvents = 'auto';
@@ -1033,8 +1045,19 @@
 
         player.controls.addEventListener('click', (e) => { e.stopPropagation(); showControls(); });
 
-        player.btnPlay.addEventListener('click', () => {
-          if(player.video.paused) player.video.play(); else player.video.pause();
+        player.btnPlay.addEventListener('click', async () => {
+          if(player.video.paused) {
+            try {
+                player.video.muted = globalMuted;
+                await player.video.play();
+            } catch(e) {
+                player.video.muted = true;
+                await player.video.play().catch(()=>{});
+                showToast('播放受限，已自动静音');
+            }
+          } else {
+            player.video.pause();
+          }
           player.btnPlay.innerHTML = player.video.paused ? ICONS.play : ICONS.pause;
           updateGlobalIcons();
         });
@@ -1090,9 +1113,14 @@
         player.url = URL.createObjectURL(file);
         player.video.src = player.url;
         player.video.muted = globalMuted;
-        player.video.play().catch(()=>{});
+        
+        try {
+            await player.video.play();
+        } catch(e) {
+            player.video.muted = true;
+            player.video.play().catch(()=>{});
+        }
 
-        // 沉浸式播放，隐藏Label和占位符
         player.placeholder.style.display = 'none';
         player.label.style.opacity = '0';
 
@@ -1167,16 +1195,36 @@
       document.getElementById('iconLock').innerHTML = isLocked ? ICONS.lock : ICONS.unlock;
     }
 
-    document.getElementById('tbPlayAll').addEventListener('click', () => {
+    document.getElementById('tbPlayAll').addEventListener('click', async () => {
       const visiblePlayers = players.filter(p => !(currentLayout === 2 && p.index >= 2) && !(currentLayout === 3 && p.index >= 3));
       const anyPlaying = visiblePlayers.some(p => p.file && !p.video.paused);
       
-      visiblePlayers.forEach(p => {
-        if(p.file) {
-          if(anyPlaying) p.video.pause(); else { p.video.muted = globalMuted; p.video.play(); }
-          p.btnPlay.innerHTML = p.video.paused ? ICONS.play : ICONS.pause;
-        }
-      });
+      if (anyPlaying) {
+          visiblePlayers.forEach(p => {
+              if(p.file) { p.video.pause(); p.btnPlay.innerHTML = ICONS.play; }
+          });
+      } else {
+          let mutedFallbackCount = 0;
+          for (let p of visiblePlayers) {
+              if(p.file) {
+                  p.video.muted = globalMuted;
+                  try {
+                      await p.video.play();
+                      p.btnPlay.innerHTML = ICONS.pause;
+                  } catch(err) {
+                      p.video.muted = true;
+                      try {
+                          await p.video.play();
+                          p.btnPlay.innerHTML = ICONS.pause;
+                          mutedFallbackCount++;
+                      } catch(e) {}
+                  }
+              }
+          }
+          if (mutedFallbackCount > 0 && !globalMuted) {
+              showToast('浏览器限制多音轨并发，部分已自动静音');
+          }
+      }
       updateGlobalIcons();
     });
 
@@ -1216,7 +1264,7 @@
     });
 
     // =======================
-    // 增加与删除视频
+    // 增加与流式队列队列入库
     // =======================
     document.getElementById('btnNewFolder').addEventListener('click', async () => {
       const name = prompt('文件夹名称');
@@ -1233,13 +1281,17 @@
       
       try { await checkStorageBeforeImport(files); } catch (err) { return; }
 
-      showToast(`开始导入 ${files.length} 个视频...`);
+      UI.importOverlay.classList.add('show');
+      let successCount = 0;
       
       for(let i = 0; i < files.length; i++) {
           const file = files[i];
           const videoId = 'v_' + Date.now() + '_' + i;
           const blobId = 'b_' + videoId;
           const thumbId = 't_' + videoId;
+
+          UI.importText.textContent = `正在导入 ${i + 1} / ${files.length}`;
+          UI.importFill.style.width = `${((i + 1) / files.length) * 100}%`;
 
           try {
               await putRecord('video_blob', { id: blobId, blob: file, createdAt: Date.now() });
@@ -1250,15 +1302,22 @@
               };
               await putRecord('video_meta', meta);
               enqueueThumb(videoId);
+              successCount++;
+              
+              if (UI.libPage.classList.contains('active')) {
+                  await loadFirstPage(currentFolderId);
+              }
           } catch (error) {
               if (error.name === 'QuotaExceededError') {
-                  showToast('存储空间不足，部分视频导入失败'); break;
+                  showToast('存储空间不足，已停止导入'); break;
               }
           }
+          await new Promise(r => setTimeout(r, 50)); 
       }
+      
       e.target.value = ''; 
-      await loadFirstPage(currentFolderId); 
-      showToast(`导入完成，后台静默生成封面中`); 
+      setTimeout(() => { UI.importOverlay.classList.remove('show'); }, 1000);
+      showToast(`成功导入 ${successCount} 个视频`); 
     });
 
     async function deleteVideo(videoId, silentMode = false) {
